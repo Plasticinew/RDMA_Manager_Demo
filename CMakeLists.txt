@@ -18,7 +18,7 @@ endif( CMAKE_BUILD_TYPE STREQUAL "Debug" )
 
 message("Build Type: ${CMAKE_BUILD_TYPE} ${CMAKE_CXX_FLAGS}")
 
-set(CMAKE_INSTALL_PREFIX ${CMAKE_BINARY_DIR}/mralloc)
+set(CMAKE_INSTALL_PREFIX ${CMAKE_BINARY_DIR}/rdmanager)
 MESSAGE("Install prefix is: ${CMAKE_INSTALL_PREFIX}")
 
 include_directories(${PROJECT_SOURCE_DIR}/include)
