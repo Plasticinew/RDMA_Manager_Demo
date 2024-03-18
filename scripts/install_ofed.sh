@@ -1,5 +1,7 @@
 #!/bin/bash
 
+sudo apt install libvirt-clients qemu qemu-kvm libvirt-daemon-system bridge-utils cmake -y
+
 wget https://content.mellanox.com/ofed/MLNX_OFED-5.8-3.0.7.0/MLNX_OFED_LINUX-5.8-3.0.7.0-ubuntu22.04-x86_64.tgz
 
 tar -zxvf MLNX_OFED_LINUX-5.8-3.0.7.0-ubuntu22.04-x86_64.tgz
