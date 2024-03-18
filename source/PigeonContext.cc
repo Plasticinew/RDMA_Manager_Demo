@@ -9,7 +9,7 @@ PigeonContext::PigeonContext(ibv_context* context) {
     name_.assign(context->device->name);
     pd_ = ibv_alloc_pd(context_);
     channel_ = rdma_create_event_channel();
-    int result = rdma_create_id(channel_, &cm_id_, context_, RDMA_PS_TCP);
+    int result = rdma_create_id(channel_, &cm_id_, NULL, RDMA_PS_TCP);
     status_ = PigeonStatus::PIGEON_STATUS_INIT;
     assert(result == 0);
     assert(pd_ != NULL);
@@ -22,9 +22,16 @@ void PigeonContext::PigeonConnect(const std::string ip, const std::string port) 
     int result = getaddrinfo(ip.c_str(), port.c_str(), NULL, &res);
     assert(result == 0);
 
+    struct sockaddr_in src_addr;   // 设置源地址（指定网卡设备）
+    memset(&src_addr, 0, sizeof(src_addr));
+    src_addr.sin_family = AF_INET;
+    inet_pton(AF_INET, "10.10.1.10", &src_addr.sin_addr); // 本地网卡IP地址
+
+
     addrinfo *t = NULL;
+    
     for(t = res; t; t = t->ai_next) {
-        if(!rdma_resolve_addr(cm_id_, NULL, t->ai_addr, RESOLVE_TIMEOUT_MS)) {
+        if(!rdma_resolve_addr(cm_id_, (struct sockaddr *)&src_addr, t->ai_addr, RESOLVE_TIMEOUT_MS)) {
             break;
         }
     }
