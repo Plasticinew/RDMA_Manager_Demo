@@ -21,6 +21,11 @@
 const int RESOLVE_TIMEOUT_MS = 5000;
 const int RDMA_TIMEOUT_US = 10000000;  // 10s
 
+struct PigeonDevice {
+    std::string name;
+    std::string ip;
+};
+
 enum PigeonStatus {
     PIGEON_STATUS_INIT,
     PIGEON_STATUS_CONNECTED,

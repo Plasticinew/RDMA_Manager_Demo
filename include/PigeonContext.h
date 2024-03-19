@@ -5,7 +5,7 @@ namespace rdmanager{
 
 class PigeonContext{
 public:
-    PigeonContext(ibv_context* context) ;
+    PigeonContext(ibv_context* context, PigeonDevice device);
 
     void PigeonConnect(const std::string ip, const std::string port);
     void PigeonListen(const std::string ip, const std::string port);
@@ -25,14 +25,17 @@ public:
     }
 
     std::string get_name() {
-        return name_;
+        return device_.name;
+    }
+
+    std::string get_ip() {
+        return device_.ip;
     }
 
     ibv_mr* get_mr() {
         return mr_;
     }
 private:
-    std::string name_;
     ibv_context* context_;
     ibv_pd* pd_;
     ibv_mr* mr_;
@@ -40,6 +43,7 @@ private:
     rdma_cm_id* cm_id_;
     ibv_cq* cq_;
     PigeonStatus status_;
+    PigeonDevice device_;
 };
 
 }

@@ -4,13 +4,13 @@
 
 namespace rdmanager{
 
-PigeonContext::PigeonContext(ibv_context* context) {
+PigeonContext::PigeonContext(ibv_context* context, PigeonDevice device) {
     context_ = context;
-    name_.assign(context->device->name);
     pd_ = ibv_alloc_pd(context_);
     channel_ = rdma_create_event_channel();
     int result = rdma_create_id(channel_, &cm_id_, NULL, RDMA_PS_TCP);
     status_ = PigeonStatus::PIGEON_STATUS_INIT;
+    device_ = device;
     assert(result == 0);
     assert(pd_ != NULL);
     assert(channel_ != NULL);
@@ -25,7 +25,7 @@ void PigeonContext::PigeonConnect(const std::string ip, const std::string port) 
     struct sockaddr_in src_addr;   // 设置源地址（指定网卡设备）
     memset(&src_addr, 0, sizeof(src_addr));
     src_addr.sin_family = AF_INET;
-    inet_pton(AF_INET, "10.10.1.10", &src_addr.sin_addr); // 本地网卡IP地址
+    inet_pton(AF_INET, device_.ip.c_str(), &src_addr.sin_addr); // 本地网卡IP地址
 
 
     addrinfo *t = NULL;
@@ -100,7 +100,7 @@ void PigeonContext::PigeonListen(const std::string ip, const std::string port) {
     assert(result == 0);
     result = rdma_listen(cm_id_, 1024);
     assert(result == 0);
-    pigeon_debug("device %s listen on %s:%s\n", name_.c_str(), ip.c_str(), port.c_str());
+    pigeon_debug("device %s listen on %s:%s\n", device_.name.c_str(), ip.c_str(), port.c_str());
     while(true) {
         rdma_cm_event* event;
         int result = rdma_get_cm_event(channel_, &event);
@@ -154,7 +154,7 @@ void PigeonContext::PigeonAccept(rdma_cm_id* cm_id) {
 
 void PigeonContext::PigeonMemoryRegister(void* addr, size_t length) {
     ibv_mr* mr = ibv_reg_mr(pd_, addr, length, IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_READ | IBV_ACCESS_REMOTE_WRITE);
-    pigeon_debug("device %s register memory %p, length %lu, rkey %u\n", name_.c_str(), addr, length, mr->rkey);
+    pigeon_debug("device %s register memory %p, length %lu, rkey %u\n", device_.name.c_str(), addr, length, mr->rkey);
     mr_ = mr;
     assert(mr != NULL);
     return;
