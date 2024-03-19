@@ -17,7 +17,9 @@ public:
     // The method for vQP write
     int write(void* local_addr, uint64_t length, void* remote_addr, uint32_t rkey);
 
-
+    void switch_card() {
+        mapper_->switch_pigeon();
+    }
 
 private:
     

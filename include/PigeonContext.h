@@ -35,6 +35,12 @@ public:
     ibv_mr* get_mr() {
         return mr_;
     }
+
+    void show_device() {
+        pigeon_debug("device name: %s\n", device_.name.c_str());
+        pigeon_debug("device ip: %s\n", device_.ip.c_str());
+    }
+
 private:
     ibv_context* context_;
     ibv_pd* pd_;

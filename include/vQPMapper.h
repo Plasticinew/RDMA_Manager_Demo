@@ -16,6 +16,7 @@ public:
             pigeon_swap(primary_index_, secondary_index_);
             pigeon_debug("primary qp error, switch to secondary qp\n");
         } 
+        pigeon_list_[primary_index_].show_device();
         return pigeon_list_[primary_index_].get_qp();
     }
 
@@ -26,11 +27,16 @@ public:
             pigeon_swap(primary_index_, secondary_index_);
             pigeon_debug("primary qp error, switch to secondary qp\n");
         }
+        pigeon_list_[primary_index_].show_device();
         return pigeon_list_[primary_index_].get_cq();
     }
 
     uint32_t get_map_lkey() {
         return pigeon_list_[primary_index_].get_mr()->lkey;
+    }
+
+    void switch_pigeon() {
+        pigeon_swap(primary_index_, secondary_index_);
     }
 
     void add_pigeon_context(PigeonContext* context) {

@@ -31,6 +31,8 @@ int main() {
             for(int i = 0; i < 100; i ++) {
                 data[i] = 0;
             }
+        } else if(strcmp(cmd, "switch") == 0) {
+            vqp->switch_card();
         }
     }
 
