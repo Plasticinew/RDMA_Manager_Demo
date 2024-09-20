@@ -19,6 +19,26 @@ public:
         }
     }
 
+    void memory_bind(void* addr, size_t length) {
+        uint32_t global_rkey = rand();
+        uint32_t rkey_result = 0;
+        for(auto iter = context_list_.begin(); iter != context_list_.end(); iter ++) {
+            if(global_rkey){
+                (*iter).PigeonBind(addr, length, global_rkey, rkey_result);
+                if((rkey_result & 0xff) != (global_rkey & 0xff)){
+                    printf("bind failed!\n");
+                }
+            } else {
+                (*iter).PigeonBind(addr, length, 0, global_rkey);
+            }
+        }
+    }
+
+    void memory_unbind(void* addr) {
+        for(auto iter = context_list_.begin(); iter != context_list_.end(); iter ++) {
+            (*iter).PigeonUnbind(addr);
+        }
+    }
 private:
 
     std::vector<PigeonDevice> skip_device_list_;

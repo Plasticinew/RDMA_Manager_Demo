@@ -11,6 +11,9 @@ public:
     void PigeonListen(const std::string ip, const std::string port);
     void PigeonAccept(rdma_cm_id* cm_id);
     void PigeonMemoryRegister(void* addr, size_t length);
+    // Type 2 MW
+    void PigeonBind(void* addr, uint64_t length, uint32_t source_rkey, uint32_t &result_rkey);
+    void PigeonUnbind(void* addr);
 
     ibv_qp* get_qp() {
         return cm_id_->qp;
@@ -45,6 +48,7 @@ private:
     ibv_context* context_;
     ibv_pd* pd_;
     ibv_mr* mr_;
+    std::map<uint64_t, ibv_mw*> mw_pool_;
     rdma_event_channel* channel_;
     rdma_cm_id* cm_id_;
     ibv_cq* cq_;

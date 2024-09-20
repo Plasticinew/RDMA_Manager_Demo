@@ -7,6 +7,7 @@
 #include <vector>
 #include <string>
 #include <thread>
+#include <map>
 
 #include <netdb.h>
 #include <arpa/inet.h>

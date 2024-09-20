@@ -32,12 +32,16 @@ int main() {
     std::vector<PigeonDevice> skip_device_list;
     // std::vector<std::string> named_device_list = {"mlx5_2", "mlx5_3"};
     // std::vector<std::string> named_device_list = {"mlx5_4"};
-    std::vector<PigeonDevice> named_device_list = {{"mlx5_1", "10.10.1.1"}, {"mlx5_3", "10.10.1.3"}};
+    std::vector<PigeonDevice> named_device_list = {{"mlx5_4", "10.10.1.10"}, {"mlx5_5", "10.10.1.11"}};
+    // std::vector<PigeonDevice> named_device_list = {{"mlx5_2", "10.10.1.1"}};
     rdmanager::vContext vcontext(&skip_device_list, &named_device_list);
     void* addr = mmap(0, page_size, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS|MAP_HUGETLB, -1, 0);
-    memset(addr, 1, page_size);
+    memset(addr, 0, page_size);
     vcontext.memory_register(addr, page_size);
-    rdmanager::vQP* vqp = vcontext.create_vQP_connecter("10.10.1.4", "1145");
+    rdmanager::vQP* vqp = vcontext.create_vQP_connecter("10.10.1.2", "1145");
+    vcontext.memory_bind(addr, page_size);
+    vcontext.memory_unbind(addr);
+    vcontext.memory_bind(addr, page_size);
     int* data = (int*)addr;
     // loop parse input command, each line like: read/write [rkey]
     while(1) {
