@@ -23,6 +23,7 @@ public:
         uint32_t global_rkey = rand();
         uint32_t rkey_result = 0;
         for(auto iter = context_list_.begin(); iter != context_list_.end(); iter ++) {
+            while((*iter).get_status() != PigeonStatus::PIGEON_STATUS_ACCEPTED);
             if(global_rkey){
                 (*iter).PigeonBind(addr, length, global_rkey, rkey_result);
                 if((rkey_result & 0xff) != (global_rkey & 0xff)){

@@ -11,5 +11,6 @@ int main() {
     mmap((void*)addr, size, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS|MAP_FIXED|MAP_HUGETLB, -1, 0);
     vcontext.memory_register((void*)addr, size);
     rdmanager::vQP* vqp = vcontext.create_vQP_listener("10.10.1.2", "1145");
+    vcontext.memory_bind((void*)addr, size);
     getchar();
 }
