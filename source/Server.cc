@@ -10,8 +10,8 @@ int main() {
     rdmanager::vContext* vcontext = new rdmanager::vContext(&skip_device_list, &named_device_list);
     mmap((void*)addr, size, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS|MAP_FIXED|MAP_HUGETLB, -1, 0);
     vcontext->memory_register((void*)addr, size);
-    vcontext->memory_bind((void*)addr, size);
     vcontext->create_listener("10.10.1.2", "1145");
+    vcontext->memory_bind((void*)addr, size);
     rdmanager::vQP* vqp = new rdmanager::vQP(vcontext);
     getchar();
 }

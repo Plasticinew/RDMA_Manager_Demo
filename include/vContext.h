@@ -22,7 +22,7 @@ public:
     void memory_bind(void* addr, size_t length) {
         uint32_t rkey_result = 0;
         for(auto iter = context_list_.begin(); iter != context_list_.end(); iter ++) {
-            while((*iter).get_status() != PigeonStatus::PIGEON_STATUS_ACCEPTED);
+            while((*iter).get_status() != PigeonStatus::PIGEON_STATUS_ACCEPTED && (*iter).get_status() != PigeonStatus::PIGEON_STATUS_CONNECTED);
             (*iter).PigeonBind(addr, length, rkey_result);
             printf("bind success with %u\n", rkey_result);
         }
