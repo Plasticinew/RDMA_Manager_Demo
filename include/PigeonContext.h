@@ -12,7 +12,7 @@ public:
     void PigeonAccept(rdma_cm_id* cm_id);
     void PigeonMemoryRegister(void* addr, size_t length);
     // Type 2 MW
-    void PigeonBind(void* addr, uint64_t length, uint32_t source_rkey, uint32_t &result_rkey);
+    void PigeonBind(void* addr, uint64_t length, uint32_t &result_rkey);
     void PigeonUnbind(void* addr);
 
     ibv_qp* get_qp() {

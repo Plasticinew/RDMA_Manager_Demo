@@ -1,9 +1,9 @@
 
-#include "vContext.h"
+#include "vQP.h"
 
 const uint64_t page_size = 2*1024*1024;
 
-const uint64_t iter = 1000*1000;
+const uint64_t iter = 1000;
 
 void do_read(rdmanager::vQP* vqp, void* addr, uint32_t rkey) {
     printf("%lu\n", TIME_NOW);
@@ -34,14 +34,13 @@ int main() {
     // std::vector<std::string> named_device_list = {"mlx5_4"};
     std::vector<PigeonDevice> named_device_list = {{"mlx5_4", "10.10.1.10"}, {"mlx5_5", "10.10.1.11"}};
     // std::vector<PigeonDevice> named_device_list = {{"mlx5_2", "10.10.1.1"}};
-    rdmanager::vContext vcontext(&skip_device_list, &named_device_list);
+    rdmanager::vContext* vcontext = new rdmanager::vContext(&skip_device_list, &named_device_list);
     void* addr = mmap(0, page_size, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS|MAP_HUGETLB, -1, 0);
     memset(addr, 0, page_size);
-    vcontext.memory_register(addr, page_size);
-    rdmanager::vQP* vqp = vcontext.create_vQP_connecter("10.10.1.2", "1145");
-    vcontext.memory_bind(addr, page_size);
-    vcontext.memory_unbind(addr);
-    vcontext.memory_bind(addr, page_size);
+    vcontext->memory_register(addr, page_size);
+    vcontext->memory_bind(addr, page_size);
+    vcontext->create_connecter("10.10.1.2", "1145");
+    rdmanager::vQP* vqp = new rdmanager::vQP(vcontext);
     int* data = (int*)addr;
     // loop parse input command, each line like: read/write [rkey]
     while(1) {
@@ -50,9 +49,6 @@ int main() {
         scanf("%s %u", cmd, &rkey);
         if(strcmp(cmd, "read") == 0) {
             std::thread* read_thread = new std::thread(&do_read, vqp, addr, rkey);
-            // for(int i = 0; i < 100; i ++) {
-            //     printf("%d ", data[i]);
-            // }
         } else if(strcmp(cmd, "write") == 0) {
             for(int i = 0; i < 100; i ++) {
                 data[i] += i;

@@ -1,14 +1,14 @@
 
 #include "PigeonCommon.h"
-#include "vQPMapper.h"
+#include "vContext.h"
 
 namespace rdmanager{
 
 class vQP {
 
 public:
-    vQP(vQPMapper* mapper) {
-        mapper_ = mapper;
+    vQP(vContext* context) {
+        context_ = context;
     };
 
     // The method for vQP read
@@ -18,13 +18,11 @@ public:
     int write(void* local_addr, uint64_t length, void* remote_addr, uint32_t rkey);
 
     void switch_card() {
-        mapper_->switch_pigeon();
+        context_->switch_pigeon();
     }
 
 private:
-    
-    vQPMapper* mapper_;
-
+    vContext* context_;
 
 };
 

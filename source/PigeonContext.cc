@@ -160,48 +160,31 @@ void PigeonContext::PigeonMemoryRegister(void* addr, size_t length) {
     return;
 }
 
-void PigeonContext::PigeonBind(void* addr, uint64_t length, uint32_t source_rkey, uint32_t &result_rkey){
+void PigeonContext::PigeonBind(void* addr, uint64_t length, uint32_t &result_rkey){
     uint64_t addr_ = (uint64_t)addr;
     ibv_mw* mw;
     if(mw_pool_.find(addr_)==mw_pool_.end()){
-        mw = ibv_alloc_mw(pd_, IBV_MW_TYPE_2);
+        mw = ibv_alloc_mw(pd_, IBV_MW_TYPE_1);
         printf("addr:%lx rkey_old: %u\n",  addr, mw->rkey);
         mw_pool_[addr_] = mw;
     } else {
         mw = mw_pool_[addr_];
     }
-    struct ibv_send_wr wr_ = {};
-    struct ibv_send_wr* bad_wr_ = NULL;
-    wr_.wr_id = 0;
-    wr_.num_sge = 0;
-    wr_.next = NULL;
-    wr_.opcode = IBV_WR_BIND_MW;
-    wr_.sg_list = NULL;
-    wr_.send_flags = IBV_SEND_SIGNALED;
-    wr_.bind_mw.mw = mw;
-    if(source_rkey == 0){
-        wr_.bind_mw.rkey = mw->rkey; 
-    } else {
-        wr_.bind_mw.rkey = ((mw->rkey>>8)<<8) + (source_rkey & 0xff);
-    }
-    wr_.bind_mw.bind_info.addr = addr_;
-    wr_.bind_mw.bind_info.length = length;
-    wr_.bind_mw.bind_info.mr = mr_;
-    wr_.bind_mw.bind_info.mw_access_flags = IBV_ACCESS_REMOTE_READ | 
-                                IBV_ACCESS_REMOTE_WRITE;
-    // printf("try to bind with rkey: %d, old_rkey is %d, old mw is %d\n", mw->rkey, mw->rkey, mw->rkey);
-    if (ibv_post_send(cm_id_->qp, &wr_, &bad_wr_)) {
+    struct ibv_mw_bind_info bind_info_ = {.mr = mr_, 
+                                            .addr = addr_, 
+                                            .length = length,
+                                            .mw_access_flags = IBV_ACCESS_REMOTE_READ | 
+                                                IBV_ACCESS_REMOTE_WRITE } ;
+    struct ibv_mw_bind bind_ = {.wr_id = 0, .send_flags = IBV_SEND_SIGNALED, .bind_info = bind_info_};
+    if(ibv_bind_mw(cm_id_->qp, mw, &bind_)){
         perror("ibv_post_send mw_bind fail");
     } else {
-        if(bad_wr_ != NULL) {
-            printf("error!\n");
-        }
         while (true) {
             ibv_wc wc;
             int rc = ibv_poll_cq(cq_, 1, &wc);
             if (rc > 0) {
             if (IBV_WC_SUCCESS == wc.status) {
-                mw->rkey = wr_.bind_mw.rkey;
+                // mw->rkey = wr_.bind_mw.rkey;
                 // printf("bind success! rkey = %d, mw.rkey = %d \n", wr_.bind_mw.rkey, mw->rkey);
                 break;
             } else if (IBV_WC_WR_FLUSH_ERR == wc.status) {
@@ -223,57 +206,8 @@ void PigeonContext::PigeonBind(void* addr, uint64_t length, uint32_t source_rkey
             }
         }
     }
-    pigeon_debug("device %s bind memory %p, length %lu, bind rkey %u, rkey %u\n", device_.name.c_str(), addr, length, wr_.bind_mw.rkey, mw->rkey);
+    pigeon_debug("device %s bind memory %p, length %lu, rkey %u\n", device_.name.c_str(), addr, length, mw->rkey);
     result_rkey = mw->rkey;
-    return;
-}
-
-
-void PigeonContext::PigeonUnbind(void* addr){
-    uint64_t addr_ = (uint64_t)addr;
-    ibv_mw* mw = mw_pool_[addr_];
-    struct ibv_send_wr wr_ = {};
-    struct ibv_send_wr* bad_wr_ = NULL;
-    wr_.wr_id = 0;
-    wr_.num_sge = 0;
-    wr_.next = NULL;
-    wr_.opcode = IBV_WR_LOCAL_INV;
-    wr_.sg_list = NULL;
-    wr_.send_flags = IBV_SEND_SIGNALED;
-    wr_.invalidate_rkey = mw->rkey;
-    if (ibv_post_send(cm_id_->qp, &wr_, &bad_wr_)) {
-        perror("ibv_post_send mw_bind fail");
-    } else {
-        if(bad_wr_ != NULL) {
-            printf("error!\n");
-        }
-        while (true) {
-            ibv_wc wc;
-            int rc = ibv_poll_cq(cq_, 1, &wc);
-            if (rc > 0) {
-            if (IBV_WC_SUCCESS == wc.status) {
-                // printf("bind success! rkey = %d, mw.rkey = %d \n", wr_.bind_mw.rkey, mw->rkey);
-                break;
-            } else if (IBV_WC_WR_FLUSH_ERR == wc.status) {
-                perror("cmd_send IBV_WC_WR_FLUSH_ERR");
-                break;
-            } else if (IBV_WC_RNR_RETRY_EXC_ERR == wc.status) {
-                perror("cmd_send IBV_WC_RNR_RETRY_EXC_ERR");
-                break;
-            } else {
-                perror("cmd_send ibv_poll_cq status error");
-                printf("%d\n", wc.status);
-                break;
-            }
-            } else if (0 == rc) {
-            continue;
-            } else {
-            perror("ibv_poll_cq fail");
-            break;
-            }
-        }
-    }
-    pigeon_debug("device %s invalidate memory %p, rkey %u\n", device_.name.c_str(), addr, mw->rkey);
     return;
 }
 

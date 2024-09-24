@@ -1,6 +1,6 @@
+#pragma once
 
-
-#include "vQP.h"
+#include "PigeonContext.h"
 #include "PigeonCommon.h"
 
 namespace rdmanager{
@@ -10,8 +10,8 @@ public:
     // change the vector to a pair of two string: device name and device ip
     vContext(std::vector<PigeonDevice> *skip_device_list, std::vector<PigeonDevice> *named_device_list) ;
 
-    vQP* create_vQP_connecter(const std::string ip, const std::string port);
-    vQP* create_vQP_listener(const std::string ip, const std::string port);
+    void create_connecter(const std::string ip, const std::string port);
+    void create_listener(const std::string ip, const std::string port);
 
     void memory_register(void* addr, size_t length) {
         for(auto iter = context_list_.begin(); iter != context_list_.end(); iter ++) {
@@ -20,31 +20,58 @@ public:
     }
 
     void memory_bind(void* addr, size_t length) {
-        uint32_t global_rkey = rand();
         uint32_t rkey_result = 0;
         for(auto iter = context_list_.begin(); iter != context_list_.end(); iter ++) {
             while((*iter).get_status() != PigeonStatus::PIGEON_STATUS_ACCEPTED);
-            if(global_rkey){
-                (*iter).PigeonBind(addr, length, global_rkey, rkey_result);
-                if((rkey_result & 0xff) != (global_rkey & 0xff)){
-                    printf("bind failed!\n");
-                }
-            } else {
-                (*iter).PigeonBind(addr, length, 0, global_rkey);
-            }
+            (*iter).PigeonBind(addr, length, rkey_result);
+            printf("bind success with %u\n", rkey_result);
         }
     }
 
     void memory_unbind(void* addr) {
+        uint32_t rkey;
         for(auto iter = context_list_.begin(); iter != context_list_.end(); iter ++) {
-            (*iter).PigeonUnbind(addr);
+            (*iter).PigeonBind(addr, 0, rkey);
         }
     }
+
+    ibv_qp* get_qp() {
+        // TODO: automatically remove the pigeon that is in error status and add a new one 
+        while (context_list_[primary_index_].get_status() == PigeonStatus::PIGEON_STATUS_INIT);
+        while (context_list_[primary_index_].get_status() == PigeonStatus::PIGEON_STATUS_ERROR) {
+            pigeon_swap(primary_index_, secondary_index_);
+            pigeon_debug("primary qp error, switch to secondary qp\n");
+        } 
+        context_list_[primary_index_].show_device();
+        return context_list_[primary_index_].get_qp();
+    }
+
+    ibv_cq* get_cq() {
+        // TODO: automatically remove the pigeon that is in error status and add a new one 
+        while (context_list_[primary_index_].get_status() == PigeonStatus::PIGEON_STATUS_INIT);
+        while (context_list_[primary_index_].get_status() == PigeonStatus::PIGEON_STATUS_ERROR) {
+            pigeon_swap(primary_index_, secondary_index_);
+            pigeon_debug("primary qp error, switch to secondary qp\n");
+        }
+        context_list_[primary_index_].show_device();
+        return context_list_[primary_index_].get_cq();
+    }
+
+    uint32_t get_lkey() {
+        return context_list_[primary_index_].get_mr()->lkey;
+    }
+
+    void switch_pigeon() {
+        pigeon_swap(primary_index_, secondary_index_);
+    }
+
 private:
 
     std::vector<PigeonDevice> skip_device_list_;
     std::vector<PigeonDevice> named_device_list_;
     std::vector<PigeonContext> context_list_ ;
+    int primary_index_ = 0;
+    int secondary_index_ = 1;
 
 };
 

@@ -7,7 +7,7 @@ int vQP::read(void* local_addr, uint64_t length, void* remote_addr, uint32_t rke
     struct ibv_sge sge;
     sge.addr = (uint64_t)local_addr;
     sge.length = length;
-    sge.lkey = mapper_->get_map_lkey();
+    sge.lkey = context_->get_lkey();
 
     struct ibv_send_wr send_wr = {};
     struct ibv_send_wr *bad_send_wr;
@@ -20,7 +20,7 @@ int vQP::read(void* local_addr, uint64_t length, void* remote_addr, uint32_t rke
     send_wr.wr.rdma.remote_addr = (uint64_t)remote_addr;
     send_wr.wr.rdma.rkey = rkey;
 
-    ibv_qp* qp = mapper_->get_map_qp();
+    ibv_qp* qp = context_->get_qp();
     if (ibv_post_send(qp, &send_wr, &bad_send_wr)) {
         std::cerr << "Error, ibv_post_send failed" << std::endl;
         return -1;
@@ -29,7 +29,7 @@ int vQP::read(void* local_addr, uint64_t length, void* remote_addr, uint32_t rke
     auto start = TIME_NOW;
     int ret = -1;
     struct ibv_wc wc;
-    ibv_cq* cq = mapper_->get_map_cq();
+    ibv_cq* cq = context_->get_cq();
     while(true) {
         if(TIME_DURATION_US(start, TIME_NOW) > RDMA_TIMEOUT_US) {
             std::cerr << "Error, read timeout" << std::endl;
@@ -52,7 +52,7 @@ int vQP::write(void* local_addr, uint64_t length, void* remote_addr, uint32_t rk
     struct ibv_sge sge;
     sge.addr = (uint64_t)local_addr;
     sge.length = length;
-    sge.lkey = mapper_->get_map_lkey();
+    sge.lkey = context_->get_lkey();
 
     struct ibv_send_wr send_wr = {};
     struct ibv_send_wr *bad_send_wr;
@@ -65,7 +65,7 @@ int vQP::write(void* local_addr, uint64_t length, void* remote_addr, uint32_t rk
     send_wr.wr.rdma.remote_addr = (uint64_t)remote_addr;
     send_wr.wr.rdma.rkey = rkey;
 
-    ibv_qp* qp = mapper_->get_map_qp();
+    ibv_qp* qp = context_->get_qp();
     if (ibv_post_send(qp, &send_wr, &bad_send_wr)) {
         std::cerr << "Error, ibv_post_send failed" << std::endl;
         return -1;
@@ -74,7 +74,7 @@ int vQP::write(void* local_addr, uint64_t length, void* remote_addr, uint32_t rk
     auto start = TIME_NOW;
     int ret = -1;
     struct ibv_wc wc;
-    ibv_cq* cq = mapper_->get_map_cq();
+    ibv_cq* cq = context_->get_cq();
     while(true) {
         if(TIME_DURATION_US(start, TIME_NOW) > RDMA_TIMEOUT_US) {
             std::cerr << "Error, write timeout" << std::endl;
