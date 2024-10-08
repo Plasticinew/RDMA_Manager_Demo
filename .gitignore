@@ -1,6 +1,9 @@
 # Prerequisites
 *.d
 
+MLNX_OFED_LINUX-5.6-1.0.3.3-ubuntu22.04-x86_64/
+MLNX_OFED_LINUX-5.6-1.0.3.3-ubuntu22.04-x86_64.*
+
 # Compiled Object files
 *.slo
 *.lo

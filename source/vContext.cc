@@ -45,6 +45,12 @@ vContext::vContext(std::vector<PigeonDevice> *skip_device_list, std::vector<Pige
                     }
                     PigeonContext context(device_list[i], *iter);
                     context_list_.push_back(context);
+                    DynamicContext r_context(device_list[i], (*iter));
+                    r_context.DynamicListen();
+                    back_context_recv_.push_back(r_context);
+                    DynamicContext s_context(device_list[i], (*iter));
+                    s_context.DynamicConnect();
+                    back_context_send_.push_back(s_context);
                 }
             }
         }

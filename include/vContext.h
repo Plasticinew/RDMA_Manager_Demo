@@ -2,6 +2,7 @@
 
 #include "PigeonContext.h"
 #include "PigeonCommon.h"
+#include "DynamicContext.h"
 
 namespace rdmanager{
 
@@ -70,6 +71,8 @@ private:
     std::vector<PigeonDevice> skip_device_list_;
     std::vector<PigeonDevice> named_device_list_;
     std::vector<PigeonContext> context_list_ ;
+    std::vector<DynamicContext> back_context_send_ ;
+    std::vector<DynamicContext> back_context_recv_ ;
     int primary_index_ = 0;
     int secondary_index_ = 1;
 

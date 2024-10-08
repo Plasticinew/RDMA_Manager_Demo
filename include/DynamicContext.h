@@ -1,0 +1,66 @@
+
+#include "PigeonCommon.h"
+#include <infiniband/mlx5dv.h>
+// #include <infiniband/verbs_exp.h>
+
+namespace rdmanager{
+
+class DynamicContext{
+public:
+    DynamicContext(ibv_context* context, PigeonDevice device);
+
+    void DynamicConnect();
+    void DynamicListen();
+    void PigeonMemoryRegister(void* addr, size_t length);
+    // Type 2 MW
+    void PigeonBind(void* addr, uint64_t length, uint32_t &result_rkey);
+    void PigeonUnbind(void* addr);
+
+    ibv_qp* get_qp() {
+        return qp_;
+    }
+
+    ibv_cq* get_cq() {
+        return cq_;
+    }
+
+    PigeonStatus get_status() {
+        return status_;
+    }
+
+    std::string get_name() {
+        return device_.name;
+    }
+
+    std::string get_ip() {
+        return device_.ip;
+    }
+
+    ibv_mr* get_mr() {
+        return mr_;
+    }
+
+    void show_device() {
+        pigeon_debug("device name: %s\n", device_.name.c_str());
+        pigeon_debug("device ip: %s\n", device_.ip.c_str());
+    }
+
+private:
+    ibv_context* context_;
+    ibv_device* dev_;
+    ibv_pd* pd_;
+    ibv_mr* mr_;
+    std::map<uint64_t, ibv_mw*> mw_pool_;
+    ibv_qp* qp_;
+    ibv_qp_ex* qp_ex_;
+    mlx5dv_qp_ex* qp_mlx_ex_;
+    uint8_t port_num_;
+    uint16_t lid_;
+    uint32_t dct_num_;
+    ibv_cq* cq_;
+    ibv_srq* srq_;
+    PigeonStatus status_;
+    PigeonDevice device_;
+};
+
+}

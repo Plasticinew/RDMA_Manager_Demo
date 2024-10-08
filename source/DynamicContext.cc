@@ -1,0 +1,157 @@
+
+#include "PigeonCommon.h"
+#include "DynamicContext.h"
+
+namespace rdmanager{
+
+DynamicContext::DynamicContext(ibv_context* context, PigeonDevice device) {
+    context_ = context;
+    pd_ = ibv_alloc_pd(context_);
+    status_ = PigeonStatus::PIGEON_STATUS_INIT;
+    device_ = device;
+    assert(pd_ != NULL);
+}
+
+void DynamicContext::DynamicConnect() {
+    struct mlx5dv_qp_init_attr dv_init_attr;
+    struct ibv_qp_init_attr_ex init_attr;
+    
+    memset(&dv_init_attr, 0, sizeof(dv_init_attr));
+    memset(&init_attr, 0, sizeof(init_attr));
+    
+    cq_ = ibv_create_cq(context_, 128, NULL, NULL, 0);
+
+    init_attr.qp_type = IBV_QPT_DRIVER;
+    init_attr.send_cq = cq_;
+    init_attr.recv_cq = cq_;
+    init_attr.pd = pd_; 
+
+    init_attr.comp_mask |= IBV_QP_INIT_ATTR_SEND_OPS_FLAGS | IBV_QP_INIT_ATTR_PD ;
+    init_attr.send_ops_flags |= IBV_QP_EX_WITH_SEND | IBV_QP_EX_WITH_RDMA_READ | IBV_QP_EX_WITH_RDMA_WRITE;
+ 
+    dv_init_attr.comp_mask |=
+                MLX5DV_QP_INIT_ATTR_MASK_DC |
+                MLX5DV_QP_INIT_ATTR_MASK_QP_CREATE_FLAGS;
+    dv_init_attr.create_flags |=
+                MLX5DV_QP_CREATE_DISABLE_SCATTER_TO_CQE;
+    dv_init_attr.dc_init_attr.dc_type = MLX5DV_DCTYPE_DCI;
+
+    qp_ = mlx5dv_create_qp(context_, &init_attr, &dv_init_attr);
+
+    if(qp_ == NULL) {
+        perror("create dcqp failed!");
+    }
+    qp_ex_ = ibv_qp_to_qp_ex(qp_);
+
+    qp_mlx_ex_ = mlx5dv_qp_ex_from_ibv_qp_ex(qp_ex_);
+
+    return;
+}
+
+void DynamicContext::DynamicListen() {
+    struct mlx5dv_qp_init_attr dv_init_attr;
+    struct ibv_qp_init_attr_ex init_attr;
+    
+    memset(&dv_init_attr, 0, sizeof(dv_init_attr));
+    memset(&init_attr, 0, sizeof(init_attr));
+    
+    cq_ = ibv_create_cq(context_, 128, NULL, NULL, 0);
+    struct ibv_srq_init_attr srq_init_attr;
+ 
+    memset(&srq_init_attr, 0, sizeof(srq_init_attr));
+ 
+    srq_init_attr.attr.max_wr  = 32;
+    srq_init_attr.attr.max_sge = 1;
+ 
+    srq_ = ibv_create_srq(pd_, &srq_init_attr);
+
+    init_attr.qp_type = IBV_QPT_DRIVER;
+    init_attr.send_cq = cq_;
+    init_attr.recv_cq = cq_;
+    init_attr.pd = pd_; 
+
+    init_attr.comp_mask |= IBV_QP_INIT_ATTR_PD;
+    init_attr.srq = srq_;
+    dv_init_attr.comp_mask = MLX5DV_QP_INIT_ATTR_MASK_DC;
+    dv_init_attr.dc_init_attr.dc_type = MLX5DV_DCTYPE_DCT;
+    dv_init_attr.dc_init_attr.dct_access_key = 0x1ee7a330;
+
+    qp_ = mlx5dv_create_qp(context_, &init_attr, &dv_init_attr);
+    if(qp_ == NULL) {
+        perror("create dcqp failed!");
+    }
+    struct ibv_qp_attr attr;
+    struct ibv_qp_init_attr init_attr_;
+    
+    ibv_query_qp(qp_, &attr,
+            IBV_QP_STATE, &init_attr_);
+
+    lid_ = attr.ah_attr.dlid;
+    port_num_ = attr.ah_attr.port_num;
+    dct_num_ = qp_->qp_num;
+
+    printf("%d, %d, %d\n", lid_, port_num_, dct_num_);
+
+    return;
+}
+
+void DynamicContext::PigeonMemoryRegister(void* addr, size_t length) {
+    ibv_mr* mr = ibv_reg_mr(pd_, addr, length, IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_READ | IBV_ACCESS_REMOTE_WRITE  | IBV_ACCESS_REMOTE_ATOMIC | IBV_ACCESS_MW_BIND);
+    pigeon_debug("device %s register memory %p, length %lu, rkey %u\n", device_.name.c_str(), addr, length, mr->rkey);
+    mr_ = mr;
+    assert(mr != NULL);
+    return;
+}
+
+void DynamicContext::PigeonBind(void* addr, uint64_t length, uint32_t &result_rkey){
+    uint64_t addr_ = (uint64_t)addr;
+    ibv_mw* mw;
+    if(mw_pool_.find(addr_)==mw_pool_.end()){
+        mw = ibv_alloc_mw(pd_, IBV_MW_TYPE_1);
+        printf("addr:%lx rkey_old: %u\n",  addr, mw->rkey);
+        mw_pool_[addr_] = mw;
+    } else {
+        mw = mw_pool_[addr_];
+    }
+    struct ibv_mw_bind_info bind_info_ = {.mr = mr_, 
+                                            .addr = addr_, 
+                                            .length = length,
+                                            .mw_access_flags = IBV_ACCESS_REMOTE_READ | 
+                                                IBV_ACCESS_REMOTE_WRITE } ;
+    struct ibv_mw_bind bind_ = {.wr_id = 0, .send_flags = IBV_SEND_SIGNALED, .bind_info = bind_info_};
+    if(ibv_bind_mw(qp_, mw, &bind_)){
+        perror("ibv_post_send mw_bind fail");
+    } else {
+        while (true) {
+            ibv_wc wc;
+            int rc = ibv_poll_cq(cq_, 1, &wc);
+            if (rc > 0) {
+            if (IBV_WC_SUCCESS == wc.status) {
+                // mw->rkey = wr_.bind_mw.rkey;
+                // printf("bind success! rkey = %d, mw.rkey = %d \n", wr_.bind_mw.rkey, mw->rkey);
+                break;
+            } else if (IBV_WC_WR_FLUSH_ERR == wc.status) {
+                perror("cmd_send IBV_WC_WR_FLUSH_ERR");
+                break;
+            } else if (IBV_WC_RNR_RETRY_EXC_ERR == wc.status) {
+                perror("cmd_send IBV_WC_RNR_RETRY_EXC_ERR");
+                break;
+            } else {
+                perror("cmd_send ibv_poll_cq status error");
+                printf("%d\n", wc.status);
+                break;
+            }
+            } else if (0 == rc) {
+            continue;
+            } else {
+            perror("ibv_poll_cq fail");
+            break;
+            }
+        }
+    }
+    pigeon_debug("device %s bind memory %p, length %lu, rkey %u\n", device_.name.c_str(), addr, length, mw->rkey);
+    result_rkey = mw->rkey;
+    return;
+}
+
+}
