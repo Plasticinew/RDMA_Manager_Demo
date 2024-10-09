@@ -42,18 +42,6 @@ void DynamicContext::DynamicConnect() {
         perror("create dcqp failed!");
     }
 
-    struct ibv_qp_attr attr;
-    struct ibv_qp_init_attr init_attr_;
-    
-    ibv_query_qp(qp_, &attr,
-            IBV_QP_STATE, &init_attr_);
-
-    lid_ = attr.ah_attr.dlid;
-    port_num_ = attr.ah_attr.port_num;
-    dct_num_ = qp_->qp_num;
-
-    printf("%d, %d, %d\n", lid_, port_num_, dct_num_);
-
     qp_ex_ = ibv_qp_to_qp_ex(qp_);
 
     qp_mlx_ex_ = mlx5dv_qp_ex_from_ibv_qp_ex(qp_ex_);
