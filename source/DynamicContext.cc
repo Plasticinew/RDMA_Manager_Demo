@@ -41,6 +41,19 @@ void DynamicContext::DynamicConnect() {
     if(qp_ == NULL) {
         perror("create dcqp failed!");
     }
+
+    struct ibv_qp_attr attr;
+    struct ibv_qp_init_attr init_attr_;
+    
+    ibv_query_qp(qp_, &attr,
+            IBV_QP_STATE, &init_attr_);
+
+    lid_ = attr.ah_attr.dlid;
+    port_num_ = attr.ah_attr.port_num;
+    dct_num_ = qp_->qp_num;
+
+    printf("%d, %d, %d\n", lid_, port_num_, dct_num_);
+
     qp_ex_ = ibv_qp_to_qp_ex(qp_);
 
     qp_mlx_ex_ = mlx5dv_qp_ex_from_ibv_qp_ex(qp_ex_);
@@ -93,6 +106,47 @@ void DynamicContext::DynamicListen() {
     printf("%d, %d, %d\n", lid_, port_num_, dct_num_);
 
     return;
+}
+
+int DynamicContext::DynamicRead(void* local_addr, uint64_t length, void* remote_addr, uint32_t rkey, uint32_t lid, uint32_t dct_num){
+    struct ibv_ah_attr ah_attr;
+    ah_attr.dlid = lid;
+    ah_attr.port_num = 1;
+    
+    ibv_ah* ah = ibv_create_ah(pd_, &ah_attr);
+    if (ah) {
+        return -1;
+    }
+    
+    ibv_wr_start(qp_ex_);
+    qp_ex_->wr_id = 1;
+    qp_ex_->wr_flags = IBV_SEND_SIGNALED;
+    ibv_wr_rdma_read(qp_ex_, rkey, (uint64_t)remote_addr);
+    ibv_wr_set_sge(qp_ex_, mr_->lkey, (uint64_t)local_addr, length);
+    mlx5dv_wr_set_dc_addr(qp_mlx_ex_, ah, dct_num, 114514);
+    ibv_wr_complete(qp_ex_);
+    return 0;
+}
+
+
+int DynamicContext::DynamicWrite(void* local_addr, uint64_t length, void* remote_addr, uint32_t rkey, uint32_t lid, uint32_t dct_num){
+    struct ibv_ah_attr ah_attr;
+    ah_attr.dlid = lid;
+    ah_attr.port_num = 1;
+    
+    ibv_ah* ah = ibv_create_ah(pd_, &ah_attr);
+    if (ah) {
+        return -1;
+    }
+    
+    ibv_wr_start(qp_ex_);
+    qp_ex_->wr_id = 1;
+    qp_ex_->wr_flags = IBV_SEND_SIGNALED;
+    ibv_wr_rdma_write(qp_ex_, rkey, (uint64_t)remote_addr);
+    ibv_wr_set_sge(qp_ex_, mr_->lkey, (uint64_t)local_addr, length);
+    mlx5dv_wr_set_dc_addr(qp_mlx_ex_, ah, dct_num, 114514);
+    ibv_wr_complete(qp_ex_);
+    return 0;
 }
 
 void DynamicContext::PigeonMemoryRegister(void* addr, size_t length) {

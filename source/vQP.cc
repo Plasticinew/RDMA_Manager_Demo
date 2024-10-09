@@ -4,6 +4,14 @@
 namespace rdmanager {
 
 int vQP::read(void* local_addr, uint64_t length, void* remote_addr, uint32_t rkey) {
+    return read_main(local_addr, length, remote_addr, rkey);
+}
+
+int vQP::write(void* local_addr, uint64_t length, void* remote_addr, uint32_t rkey) {
+    return read_main(local_addr, length, remote_addr, rkey);
+}
+
+int vQP::read_main(void* local_addr, uint64_t length, void* remote_addr, uint32_t rkey) {
     struct ibv_sge sge;
     sge.addr = (uint64_t)local_addr;
     sge.length = length;
@@ -48,7 +56,7 @@ int vQP::read(void* local_addr, uint64_t length, void* remote_addr, uint32_t rke
     return ret;
 }
 
-int vQP::write(void* local_addr, uint64_t length, void* remote_addr, uint32_t rkey) {
+int vQP::write_main(void* local_addr, uint64_t length, void* remote_addr, uint32_t rkey) {
     struct ibv_sge sge;
     sge.addr = (uint64_t)local_addr;
     sge.length = length;
@@ -92,5 +100,14 @@ int vQP::write(void* local_addr, uint64_t length, void* remote_addr, uint32_t rk
 
     return ret;
 }
+
+int vQP::read_backup(void* local_addr, uint64_t length, void* remote_addr, uint32_t rkey, uint32_t lid, uint32_t dct_num) {
+    return context_->get_primary_dynamic()->DynamicRead(local_addr, length, remote_addr, rkey, lid, dct_num);
+}
+
+int vQP::write_backup(void* local_addr, uint64_t length, void* remote_addr, uint32_t rkey, uint32_t lid, uint32_t dct_num) {
+    return context_->get_primary_dynamic()->DynamicWrite(local_addr, length, remote_addr, rkey, lid, dct_num);
+}
+
 
 }

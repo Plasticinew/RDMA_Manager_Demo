@@ -62,6 +62,10 @@ public:
         return context_list_[primary_index_].get_mr()->lkey;
     }
 
+    DynamicContext* get_primary_dynamic() {
+        return &back_context_send_[primary_index_];
+    }
+
     void switch_pigeon() {
         pigeon_swap(primary_index_, secondary_index_);
     }
