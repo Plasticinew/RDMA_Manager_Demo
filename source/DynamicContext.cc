@@ -45,6 +45,62 @@ void DynamicContext::DynamicConnect() {
 
     qp_mlx_ex_ = mlx5dv_qp_ex_from_ibv_qp_ex(qp_ex_);
 
+    struct ibv_qp_attr         qp_attr_to_init;
+    struct ibv_qp_attr         qp_attr_to_rtr;
+    struct ibv_qp_attr         qp_attr_to_rts;
+
+    qp_attr_to_init.qp_state   = IBV_QPS_INIT;
+    qp_attr_to_init.pkey_index = 0;
+    qp_attr_to_init.port_num   = 1;
+    
+    qp_attr_to_rtr.qp_state          = IBV_QPS_RTR;
+    qp_attr_to_rtr.path_mtu          = IBV_MTU_4096;
+    qp_attr_to_rtr.min_rnr_timer     = 7;
+    // qp_attr_to_rtr.ah_attr.port_num  = 1;
+    // qp_attr_to_rtr.ah_attr.is_global = 0;
+
+    qp_attr_to_rts.qp_state      = IBV_QPS_RTS;
+    qp_attr_to_rts.timeout       = 14;
+    qp_attr_to_rts.retry_cnt     = 7;
+    qp_attr_to_rts.rnr_retry     = 7;
+    // qp_attr_to_rts.sq_psn        = UCC_QP_PSN;
+    qp_attr_to_rts.max_rd_atomic = 1;
+
+    int ret = ibv_modify_qp(qp_, &qp_attr_to_init, IBV_QP_STATE | IBV_QP_PKEY_INDEX | IBV_QP_PORT);
+    if (ret) {
+        printf("%d\n", ret);
+        perror("init state failed\n");
+        abort();
+    }
+
+    ret = ibv_modify_qp(qp_, &qp_attr_to_rtr, IBV_QP_STATE | IBV_QP_PATH_MTU);
+    if (ret) {
+        printf("%d\n", ret);
+        perror("rtr state failed\n");
+        abort();
+    }
+    
+    ret = ibv_modify_qp(qp_, &qp_attr_to_rts, IBV_QP_STATE | IBV_QP_TIMEOUT | IBV_QP_RETRY_CNT |
+                      IBV_QP_RNR_RETRY | IBV_QP_SQ_PSN |
+                      IBV_QP_MAX_QP_RD_ATOMIC | IBV_QP_MIN_RNR_TIMER);
+    if (ret) {
+        printf("%d\n", ret);
+        perror("rts state failed\n");
+        abort();
+    }
+
+    struct ibv_qp_attr attr;
+    struct ibv_qp_init_attr init_attr_;
+    
+    ibv_query_qp(qp_, &attr,
+            IBV_QP_STATE, &init_attr_);
+
+    lid_ = attr.ah_attr.dlid;
+    port_num_ = attr.ah_attr.port_num;
+    dct_num_ = qp_->qp_num;
+
+    printf("%d, %d, %d, %d\n", attr.qp_state ,lid_, port_num_, dct_num_);
+
     return;
 }
 
@@ -74,23 +130,73 @@ void DynamicContext::DynamicListen() {
     init_attr.srq = srq_;
     dv_init_attr.comp_mask = MLX5DV_QP_INIT_ATTR_MASK_DC;
     dv_init_attr.dc_init_attr.dc_type = MLX5DV_DCTYPE_DCT;
-    dv_init_attr.dc_init_attr.dct_access_key = 0x1ee7a330;
+    dv_init_attr.dc_init_attr.dct_access_key = 114514;
 
     qp_ = mlx5dv_create_qp(context_, &init_attr, &dv_init_attr);
+
     if(qp_ == NULL) {
         perror("create dcqp failed!");
     }
+
+    ibv_qp_attr qp_attr{};
+    qp_attr.qp_state = IBV_QPS_INIT;
+    qp_attr.pkey_index = 0;
+    qp_attr.port_num = 1;
+    qp_attr.qp_access_flags = IBV_ACCESS_REMOTE_WRITE |
+                                IBV_ACCESS_REMOTE_READ; 
+
+    int attr_mask =
+        IBV_QP_STATE | IBV_QP_ACCESS_FLAGS | IBV_QP_PORT |IBV_QP_PKEY_INDEX;
+
+    int ret = ibv_modify_qp(qp_, &qp_attr, attr_mask);
+    if (ret) {
+        printf("%d\n", ret);
+        perror("change state failed\n");
+        abort();
+    }
+
+    qp_attr.qp_state = IBV_QPS_RTR;
+    qp_attr.path_mtu = IBV_MTU_4096;
+    qp_attr.min_rnr_timer = 7;
+    qp_attr.ah_attr.is_global = 1;
+    qp_attr.ah_attr.grh.hop_limit = 1;
+    qp_attr.ah_attr.grh.traffic_class = 0;
+    qp_attr.ah_attr.grh.sgid_index = 0;
+    qp_attr.ah_attr.port_num = 1;
+
+    attr_mask = IBV_QP_STATE | IBV_QP_MIN_RNR_TIMER | IBV_QP_AV | IBV_QP_PATH_MTU;
+
+    ret = ibv_modify_qp(qp_, &qp_attr, attr_mask);
+    if (ret) {
+        printf("%d\n", ret);
+        perror("change state failed\n");
+        abort();
+    }
+
+    struct ibv_port_attr port_attr;
+
+	memset(&port_attr, 0, sizeof(port_attr));
+
+	ibv_query_port(context_, 1,
+		&port_attr);
+    
     struct ibv_qp_attr attr;
     struct ibv_qp_init_attr init_attr_;
     
     ibv_query_qp(qp_, &attr,
             IBV_QP_STATE, &init_attr_);
 
-    lid_ = attr.ah_attr.dlid;
-    port_num_ = attr.ah_attr.port_num;
+    // lid_ = attr.ah_attr.dlid;
+    // port_num_ = attr.ah_attr.port_num;
+
+    lid_ = port_attr.lid;
+    port_num_ = 1;
+
     dct_num_ = qp_->qp_num;
 
-    printf("%d, %d, %d\n", lid_, port_num_, dct_num_);
+    // dct_num_ = qp_->qp_num;
+
+    printf("%d, %d, %d, %d\n", attr.qp_state, lid_, port_num_, dct_num_);
 
     return;
 }
