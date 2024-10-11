@@ -4,9 +4,9 @@
 
 namespace rdmanager{
 
-DynamicContext::DynamicContext(ibv_context* context, PigeonDevice device) {
+DynamicContext::DynamicContext(ibv_context* context, PigeonDevice device, ibv_pd* pd) {
     context_ = context;
-    pd_ = ibv_alloc_pd(context_);
+    pd_ = pd;
     status_ = PigeonStatus::PIGEON_STATUS_INIT;
     device_ = device;
     assert(pd_ != NULL);
@@ -126,7 +126,7 @@ void DynamicContext::DynamicListen() {
  
     memset(&srq_init_attr, 0, sizeof(srq_init_attr));
  
-    srq_init_attr.attr.max_wr  = 32;
+    srq_init_attr.attr.max_wr  = 1;
     srq_init_attr.attr.max_sge = 1;
  
     srq_ = ibv_create_srq(pd_, &srq_init_attr);
@@ -135,6 +135,12 @@ void DynamicContext::DynamicListen() {
     init_attr.send_cq = cq_;
     init_attr.recv_cq = cq_;
     init_attr.pd = pd_; 
+    init_attr.cap.max_send_wr = 1;
+    init_attr.cap.max_recv_wr = 1;
+    init_attr.cap.max_send_sge = 1;
+    init_attr.cap.max_recv_sge = 1;
+    init_attr.cap.max_inline_data = 256;
+    init_attr.sq_sig_all = 0;
 
     init_attr.comp_mask |= IBV_QP_INIT_ATTR_PD;
     init_attr.srq = srq_;
@@ -189,24 +195,19 @@ void DynamicContext::DynamicListen() {
 
 	ibv_query_port(context_, 1,
 		&port_attr);
-    
-    struct ibv_qp_attr attr;
-    struct ibv_qp_init_attr init_attr_;
-    
-    ibv_query_qp(qp_, &attr,
-            IBV_QP_STATE, &init_attr_);
-
-    // lid_ = attr.ah_attr.dlid;
-    // port_num_ = attr.ah_attr.port_num;
 
     lid_ = port_attr.lid;
     port_num_ = 1;
+
+    ibv_gid gid;
+    ibv_query_gid(context_, 1, 1, &gid);
 
     dct_num_ = qp_->qp_num;
 
     // dct_num_ = qp_->qp_num;
 
-    printf("%d, %d, %d, %d\n", attr.qp_state, lid_, port_num_, dct_num_);
+    printf("%u, %u, %u\n", lid_, port_num_, dct_num_);
+    printf("%lu, %lu, %lu, %lu\n", *(uint64_t*)gid.raw, *((uint64_t*)(gid.raw)+1), gid.global.interface_id, gid.global.subnet_prefix);
 
     return;
 }
