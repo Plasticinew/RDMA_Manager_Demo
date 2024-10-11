@@ -1,16 +1,25 @@
 
 #include "vQP.h"
 
-const uint64_t page_size = 2*1024*1024;
+const uint64_t page_size = 2*1024;
 
 const uint64_t iter = 1000;
 
 void do_read(rdmanager::vQP* vqp, void* addr, uint32_t rkey, uint32_t lid, uint32_t dct_num) {
-    printf("%lu\n", TIME_NOW);
+    auto start_time = TIME_NOW;
+    // printf("%lu\n", TIME_NOW);
+    for(uint64_t i = 0; i < iter; i++){
+        vqp->read(addr, page_size, (void*)0x1000000, rkey);
+        // vqp->read_backup(addr, page_size, (void*)0x1000000, rkey, lid, dct_num);
+    }
+    printf("%lu\n", TIME_DURATION_US(start_time, TIME_NOW));
+    start_time = TIME_NOW;
+    // printf("%lu\n", TIME_NOW);
     for(uint64_t i = 0; i < iter; i++){
         vqp->read_backup(addr, page_size, (void*)0x1000000, rkey, lid, dct_num);
-        printf("%lu\n", TIME_NOW);
+        // vqp->read(addr, page_size, (void*)0x1000000, rkey);
     }
+    printf("%lu\n", TIME_DURATION_US(start_time, TIME_NOW));
     return;
 }
 
@@ -35,9 +44,9 @@ int main() {
     // std::vector<PigeonDevice> named_device_list = {{"mlx5_4", "10.10.1.10"}, {"mlx5_5", "10.10.1.11"}};
     // std::vector<PigeonDevice> named_device_list = {{"mlx5_7", "10.10.1.13"}, {"mlx5_4", "10.10.1.10"}};
     std::vector<PigeonDevice> named_device_list = {{"mlx5_2", "10.10.1.1"}};
-    rdmanager::vContext* vcontext = new rdmanager::vContext(&skip_device_list, &named_device_list);
     void* addr = mmap(0, page_size, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS|MAP_HUGETLB, -1, 0);
     memset(addr, 0, page_size);
+    rdmanager::vContext* vcontext = new rdmanager::vContext(&skip_device_list, &named_device_list);
     vcontext->memory_register(addr, page_size);
     vcontext->create_connecter("10.10.1.2", "1145");
     rdmanager::vQP* vqp = new rdmanager::vQP(vcontext);
@@ -56,7 +65,7 @@ int main() {
             for(int i = 0; i < 100; i ++) {
                 data[i] += i;
             }
-            vqp->write(addr, page_size, (void*)0x1000000, rkey);
+            vqp->write_backup(addr, page_size, (void*)0x1000000, rkey, lid, dct);
             for(int i = 0; i < 100; i ++) {
                 data[i] = 0;
             }

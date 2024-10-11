@@ -61,6 +61,7 @@ private:
     uint32_t dct_num_;
     ibv_cq* cq_;
     ibv_srq* srq_;
+    ibv_ah* ah_;
     PigeonStatus status_;
     PigeonDevice device_;
 };

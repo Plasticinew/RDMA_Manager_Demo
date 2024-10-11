@@ -15,8 +15,9 @@ public:
     void create_listener(const std::string ip, const std::string port);
 
     void memory_register(void* addr, size_t length) {
-        for(auto iter = context_list_.begin(); iter != context_list_.end(); iter ++) {
-            (*iter).PigeonMemoryRegister(addr, length);
+        for(int i = 0; i < context_list_.size(); i++) {
+            context_list_[i].PigeonMemoryRegister(addr, length);
+            back_context_send_[i].PigeonMemoryRegister(addr, length);
         }
     }
 
@@ -43,7 +44,7 @@ public:
             pigeon_swap(primary_index_, secondary_index_);
             pigeon_debug("primary qp error, switch to secondary qp\n");
         } 
-        context_list_[primary_index_].show_device();
+        // context_list_[primary_index_].show_device();
         return context_list_[primary_index_].get_qp();
     }
 
@@ -54,7 +55,7 @@ public:
             pigeon_swap(primary_index_, secondary_index_);
             pigeon_debug("primary qp error, switch to secondary qp\n");
         }
-        context_list_[primary_index_].show_device();
+        // context_list_[primary_index_].show_device();
         return context_list_[primary_index_].get_cq();
     }
 

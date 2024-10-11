@@ -10,6 +10,7 @@ DynamicContext::DynamicContext(ibv_context* context, PigeonDevice device) {
     status_ = PigeonStatus::PIGEON_STATUS_INIT;
     device_ = device;
     assert(pd_ != NULL);
+    ah_ = NULL;
 }
 
 void DynamicContext::DynamicConnect() {
@@ -25,6 +26,9 @@ void DynamicContext::DynamicConnect() {
     init_attr.send_cq = cq_;
     init_attr.recv_cq = cq_;
     init_attr.pd = pd_; 
+    init_attr.cap.max_send_wr = 512;
+    init_attr.cap.max_send_sge = 16;
+    init_attr.sq_sig_all = 0;
 
     init_attr.comp_mask |= IBV_QP_INIT_ATTR_SEND_OPS_FLAGS | IBV_QP_INIT_ATTR_PD ;
     init_attr.send_ops_flags |= IBV_QP_EX_WITH_SEND | IBV_QP_EX_WITH_RDMA_READ | IBV_QP_EX_WITH_RDMA_WRITE;
@@ -34,6 +38,7 @@ void DynamicContext::DynamicConnect() {
                 MLX5DV_QP_INIT_ATTR_MASK_QP_CREATE_FLAGS;
     dv_init_attr.create_flags |=
                 MLX5DV_QP_CREATE_DISABLE_SCATTER_TO_CQE;
+    
     dv_init_attr.dc_init_attr.dc_type = MLX5DV_DCTYPE_DCI;
 
     qp_ = mlx5dv_create_qp(context_, &init_attr, &dv_init_attr);
@@ -42,13 +47,13 @@ void DynamicContext::DynamicConnect() {
         perror("create dcqp failed!");
     }
 
-    qp_ex_ = ibv_qp_to_qp_ex(qp_);
-
-    qp_mlx_ex_ = mlx5dv_qp_ex_from_ibv_qp_ex(qp_ex_);
-
     struct ibv_qp_attr         qp_attr_to_init;
     struct ibv_qp_attr         qp_attr_to_rtr;
     struct ibv_qp_attr         qp_attr_to_rts;
+
+    memset(&qp_attr_to_init, 0, sizeof(qp_attr_to_init));
+    memset(&qp_attr_to_rtr, 0, sizeof(qp_attr_to_rtr));
+    memset(&qp_attr_to_rts, 0, sizeof(qp_attr_to_rts));
 
     qp_attr_to_init.qp_state   = IBV_QPS_INIT;
     qp_attr_to_init.pkey_index = 0;
@@ -57,14 +62,14 @@ void DynamicContext::DynamicConnect() {
     qp_attr_to_rtr.qp_state          = IBV_QPS_RTR;
     qp_attr_to_rtr.path_mtu          = IBV_MTU_4096;
     qp_attr_to_rtr.min_rnr_timer     = 7;
-    // qp_attr_to_rtr.ah_attr.port_num  = 1;
-    // qp_attr_to_rtr.ah_attr.is_global = 0;
+    qp_attr_to_rtr.ah_attr.port_num  = 1;
+    qp_attr_to_rtr.ah_attr.is_global = 1;
 
     qp_attr_to_rts.qp_state      = IBV_QPS_RTS;
     qp_attr_to_rts.timeout       = 14;
     qp_attr_to_rts.retry_cnt     = 7;
     qp_attr_to_rts.rnr_retry     = 7;
-    // qp_attr_to_rts.sq_psn        = UCC_QP_PSN;
+    qp_attr_to_rts.sq_psn        = 114;
     qp_attr_to_rts.max_rd_atomic = 1;
 
     int ret = ibv_modify_qp(qp_, &qp_attr_to_init, IBV_QP_STATE | IBV_QP_PKEY_INDEX | IBV_QP_PORT);
@@ -74,7 +79,7 @@ void DynamicContext::DynamicConnect() {
         abort();
     }
 
-    ret = ibv_modify_qp(qp_, &qp_attr_to_rtr, IBV_QP_STATE | IBV_QP_PATH_MTU);
+    ret = ibv_modify_qp(qp_, &qp_attr_to_rtr, IBV_QP_STATE | IBV_QP_PATH_MTU | IBV_QP_AV);
     if (ret) {
         printf("%d\n", ret);
         perror("rtr state failed\n");
@@ -102,6 +107,10 @@ void DynamicContext::DynamicConnect() {
 
     printf("%d, %d, %d, %d\n", attr.qp_state ,lid_, port_num_, dct_num_);
 
+    qp_ex_ = ibv_qp_to_qp_ex(qp_);
+
+    qp_mlx_ex_ = mlx5dv_qp_ex_from_ibv_qp_ex(qp_ex_);
+    
     return;
 }
 
@@ -162,7 +171,7 @@ void DynamicContext::DynamicListen() {
     qp_attr.ah_attr.is_global = 1;
     qp_attr.ah_attr.grh.hop_limit = 1;
     qp_attr.ah_attr.grh.traffic_class = 0;
-    qp_attr.ah_attr.grh.sgid_index = 0;
+    qp_attr.ah_attr.grh.sgid_index = 1;
     qp_attr.ah_attr.port_num = 1;
 
     attr_mask = IBV_QP_STATE | IBV_QP_MIN_RNR_TIMER | IBV_QP_AV | IBV_QP_PATH_MTU;
@@ -203,22 +212,51 @@ void DynamicContext::DynamicListen() {
 }
 
 int DynamicContext::DynamicRead(void* local_addr, uint64_t length, void* remote_addr, uint32_t rkey, uint32_t lid, uint32_t dct_num){
-    struct ibv_ah_attr ah_attr;
-    ah_attr.dlid = lid;
-    ah_attr.port_num = 1;
-    
-    ibv_ah* ah = ibv_create_ah(pd_, &ah_attr);
-    if (ah) {
-        return -1;
+    if(ah_ == NULL) {
+        ibv_gid gid;
+        // 33022, 61360441107037958, 61360441107037958, 33022
+        *(uint64_t*)gid.raw = (uint64_t)33022;
+        *((uint64_t*)(gid.raw)+1) = (uint64_t)61360441107037958;
+        gid.global.interface_id = 61360441107037958;
+        gid.global.subnet_prefix = 33022;
+        struct ibv_ah_attr ah_attr;
+        ah_attr.dlid = lid;
+        ah_attr.port_num = 1;
+        ah_attr.is_global = 1;
+        ah_attr.grh.hop_limit = 1;
+        ah_attr.grh.sgid_index = 1;
+        ah_attr.grh.dgid = gid;
+        // ah_attr.sl = 1;
+        // ah_attr.src_path_bits = 0;
+        
+        ah_ = ibv_create_ah(pd_, &ah_attr);
+        if (!ah_) {
+            perror("create ah failed!");
+            return -1;
+        }
     }
-    
     ibv_wr_start(qp_ex_);
-    qp_ex_->wr_id = 1;
+    qp_ex_->wr_id = 0;
     qp_ex_->wr_flags = IBV_SEND_SIGNALED;
     ibv_wr_rdma_read(qp_ex_, rkey, (uint64_t)remote_addr);
     ibv_wr_set_sge(qp_ex_, mr_->lkey, (uint64_t)local_addr, length);
-    mlx5dv_wr_set_dc_addr(qp_mlx_ex_, ah, dct_num, 114514);
+    mlx5dv_wr_set_dc_addr(qp_mlx_ex_, ah_, dct_num, 114514);
     ibv_wr_complete(qp_ex_);
+    auto start = TIME_NOW;
+    struct ibv_wc wc;
+    while(true) {
+        if(TIME_DURATION_US(start, TIME_NOW) > RDMA_TIMEOUT_US) {
+            std::cerr << "Error, read timeout" << std::endl;
+            break;
+        }
+        if(ibv_poll_cq(cq_, 1, &wc) > 0) {
+            if(wc.status != IBV_WC_SUCCESS) {
+                std::cerr << "Error, read failed: " << wc.status << std::endl;
+                break;
+            }
+            break;        
+        }
+    }
     return 0;
 }
 
@@ -234,8 +272,8 @@ int DynamicContext::DynamicWrite(void* local_addr, uint64_t length, void* remote
     }
     
     ibv_wr_start(qp_ex_);
-    qp_ex_->wr_id = 1;
-    qp_ex_->wr_flags = IBV_SEND_SIGNALED;
+    qp_ex_->wr_id = 0;
+    // qp_ex_->wr_flags = IBV_SEND_SIGNALED;
     ibv_wr_rdma_write(qp_ex_, rkey, (uint64_t)remote_addr);
     ibv_wr_set_sge(qp_ex_, mr_->lkey, (uint64_t)local_addr, length);
     mlx5dv_wr_set_dc_addr(qp_mlx_ex_, ah, dct_num, 114514);
