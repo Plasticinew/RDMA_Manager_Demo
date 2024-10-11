@@ -15,6 +15,10 @@ public:
     void PigeonBind(void* addr, uint64_t length, uint32_t &result_rkey);
     void PigeonUnbind(void* addr);
 
+    ibv_pd* get_pd() {
+        return pd_;
+    }
+
     ibv_qp* get_qp() {
         return cm_id_->qp;
     }

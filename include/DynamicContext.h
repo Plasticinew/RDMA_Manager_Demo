@@ -7,7 +7,7 @@ namespace rdmanager{
 
 class DynamicContext{
 public:
-    DynamicContext(ibv_context* context, PigeonDevice device);
+    DynamicContext(ibv_context* context, PigeonDevice device, ibv_pd* pd);
 
     void DynamicConnect();
     void DynamicListen();
