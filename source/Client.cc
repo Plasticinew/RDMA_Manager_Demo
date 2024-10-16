@@ -9,7 +9,7 @@ void do_read(rdmanager::vQP* vqp, void* addr, uint32_t rkey, uint32_t lid, uint3
     auto start_time = TIME_NOW;
     // printf("%lu\n", TIME_NOW);
     for(uint64_t i = 0; i < iter; i++){
-        vqp->read(addr, page_size, (void*)0x1000000, rkey);
+        vqp->read_main(addr, page_size, (void*)0x1000000, rkey);
         // vqp->read_backup(addr, page_size, (void*)0x1000000, rkey, lid, dct_num);
     }
     printf("%lu\n", TIME_DURATION_US(start_time, TIME_NOW));
@@ -41,9 +41,9 @@ int main() {
     std::vector<PigeonDevice> skip_device_list;
     // std::vector<std::string> named_device_list = {"mlx5_2", "mlx5_3"};
     // std::vector<std::string> named_device_list = {"mlx5_4"};
-    // std::vector<PigeonDevice> named_device_list = {{"mlx5_4", "10.10.1.10"}, {"mlx5_5", "10.10.1.11"}};
+    std::vector<PigeonDevice> named_device_list = {{"mlx5_4", "10.10.1.10"}, {"mlx5_5", "10.10.1.11"}};
     // std::vector<PigeonDevice> named_device_list = {{"mlx5_7", "10.10.1.13"}, {"mlx5_4", "10.10.1.10"}};
-    std::vector<PigeonDevice> named_device_list = {{"mlx5_2", "10.10.1.1"}};
+    // std::vector<PigeonDevice> named_device_list = {{"mlx5_2", "10.10.1.1"}};
     void* addr = mmap(0, page_size, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS|MAP_HUGETLB, -1, 0);
     memset(addr, 0, page_size);
     rdmanager::vContext* vcontext = new rdmanager::vContext(&skip_device_list, &named_device_list);

@@ -217,8 +217,8 @@ int DynamicContext::DynamicRead(void* local_addr, uint64_t length, void* remote_
         ibv_gid gid;
         // 33022, 61360441107037958, 61360441107037958, 33022
         *(uint64_t*)gid.raw = (uint64_t)33022;
-        *((uint64_t*)(gid.raw)+1) = (uint64_t)61360441107037958;
-        gid.global.interface_id = 61360441107037958;
+        *((uint64_t*)(gid.raw)+1) = (uint64_t)7105540014128381702;
+        gid.global.interface_id = 7105540014128381702;
         gid.global.subnet_prefix = 33022;
         struct ibv_ah_attr ah_attr;
         ah_attr.dlid = lid;
@@ -263,22 +263,51 @@ int DynamicContext::DynamicRead(void* local_addr, uint64_t length, void* remote_
 
 
 int DynamicContext::DynamicWrite(void* local_addr, uint64_t length, void* remote_addr, uint32_t rkey, uint32_t lid, uint32_t dct_num){
-    struct ibv_ah_attr ah_attr;
-    ah_attr.dlid = lid;
-    ah_attr.port_num = 1;
-    
-    ibv_ah* ah = ibv_create_ah(pd_, &ah_attr);
-    if (ah) {
-        return -1;
+    if(ah_ == NULL) {
+        ibv_gid gid;
+        // 33022, 61360441107037958, 61360441107037958, 33022
+        *(uint64_t*)gid.raw = (uint64_t)33022;
+        *((uint64_t*)(gid.raw)+1) = (uint64_t)7105540014128381702;
+        gid.global.interface_id = 7105540014128381702;
+        gid.global.subnet_prefix = 33022;
+        struct ibv_ah_attr ah_attr;
+        ah_attr.dlid = lid;
+        ah_attr.port_num = 1;
+        ah_attr.is_global = 1;
+        ah_attr.grh.hop_limit = 1;
+        ah_attr.grh.sgid_index = 1;
+        ah_attr.grh.dgid = gid;
+        // ah_attr.sl = 1;
+        // ah_attr.src_path_bits = 0;
+        
+        ah_ = ibv_create_ah(pd_, &ah_attr);
+        if (!ah_) {
+            perror("create ah failed!");
+            return -1;
+        }
     }
-    
     ibv_wr_start(qp_ex_);
     qp_ex_->wr_id = 0;
-    // qp_ex_->wr_flags = IBV_SEND_SIGNALED;
+    qp_ex_->wr_flags = IBV_SEND_SIGNALED;
     ibv_wr_rdma_write(qp_ex_, rkey, (uint64_t)remote_addr);
     ibv_wr_set_sge(qp_ex_, mr_->lkey, (uint64_t)local_addr, length);
-    mlx5dv_wr_set_dc_addr(qp_mlx_ex_, ah, dct_num, 114514);
+    mlx5dv_wr_set_dc_addr(qp_mlx_ex_, ah_, dct_num, 114514);
     ibv_wr_complete(qp_ex_);
+    auto start = TIME_NOW;
+    struct ibv_wc wc;
+    while(true) {
+        if(TIME_DURATION_US(start, TIME_NOW) > RDMA_TIMEOUT_US) {
+            std::cerr << "Error, read timeout" << std::endl;
+            break;
+        }
+        if(ibv_poll_cq(cq_, 1, &wc) > 0) {
+            if(wc.status != IBV_WC_SUCCESS) {
+                std::cerr << "Error, read failed: " << wc.status << std::endl;
+                break;
+            }
+            break;        
+        }
+    }
     return 0;
 }
 

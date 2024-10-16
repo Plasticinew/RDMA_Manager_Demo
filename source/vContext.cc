@@ -60,14 +60,19 @@ vContext::vContext(std::vector<PigeonDevice> *skip_device_list, std::vector<Pige
 
 void vContext::create_connecter(const std::string ip, const std::string port) {
     // create QP connection with certain ip...
-    for (auto iter = context_list_.begin(); iter != context_list_.end(); iter ++) {
-        (*iter).PigeonConnect(ip, port);
-    }
+    ip_ = ip;
+    port_ = port;
+    context_list_[primary_index_].PigeonConnect(ip, port);
+    // for (auto iter = context_list_.begin(); iter != context_list_.end(); iter ++) {
+    //     (*iter).PigeonConnect(ip, port);
+    // }
     return;
 }
 
 void vContext::create_listener(const std::string ip, const std::string port) {
     // create listening thread on certain ip
+    ip_ = ip;
+    port_ = port;
     for(auto iter = context_list_.begin(); iter != context_list_.end(); iter ++) {
         // pigeon_debug("create listener on %s\n", (*iter).get_name().c_str());
         std::thread* listen_thread = new std::thread(&PigeonContext::PigeonListen, &(*iter), ip, port);

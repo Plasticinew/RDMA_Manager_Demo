@@ -1,6 +1,7 @@
 
 #include "PigeonCommon.h"
 #include "vContext.h"
+#include <thread>
 
 namespace rdmanager{
 
@@ -12,10 +13,10 @@ public:
     };
 
     // The method for vQP read
-    int read(void* local_addr, uint64_t length, void* remote_addr, uint32_t rkey);
+    int read(void* local_addr, uint64_t length, void* remote_addr, uint32_t rkey, uint32_t lid, uint32_t dct_num);
 
     // The method for vQP write
-    int write(void* local_addr, uint64_t length, void* remote_addr, uint32_t rkey);
+    int write(void* local_addr, uint64_t length, void* remote_addr, uint32_t rkey, uint32_t lid, uint32_t dct_num);
 
     // Using RCQP
     int read_main(void* local_addr, uint64_t length, void* remote_addr, uint32_t rkey);
@@ -27,6 +28,7 @@ public:
 
     void switch_card() {
         context_->switch_pigeon();
+        std::thread* listen_thread = new std::thread(&vContext::switch_pigeon, context_);
     }
 
 private:
