@@ -15,6 +15,10 @@ public:
     void PigeonBind(void* addr, uint64_t length, uint32_t &result_rkey);
     void PigeonUnbind(void* addr);
 
+    bool connected() {
+        return status_ == PigeonStatus::PIGEON_STATUS_CONNECTED;
+    }
+
     ibv_pd* get_pd() {
         return pd_;
     }
