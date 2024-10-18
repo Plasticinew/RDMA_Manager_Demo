@@ -6,8 +6,10 @@ namespace rdmanager {
 int vQP::read(void* local_addr, uint64_t length, void* remote_addr, uint32_t rkey, uint32_t lid, uint32_t dct_num) {
     if(context_->connected())
         return read_main(local_addr, length, remote_addr, rkey);
-    else
+    else{
+        // printf("using temple connect\n");
         return read_backup(local_addr, length, remote_addr, rkey, lid, dct_num);
+    }
 }
 
 int vQP::write(void* local_addr, uint64_t length, void* remote_addr, uint32_t rkey, uint32_t lid, uint32_t dct_num) {

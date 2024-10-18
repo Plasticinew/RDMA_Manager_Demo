@@ -27,7 +27,7 @@ public:
     int write_backup(void* local_addr, uint64_t length, void* remote_addr, uint32_t rkey, uint32_t lid, uint32_t dct_num);
 
     void switch_card() {
-        context_->switch_pigeon();
+        // context_->switch_pigeon();
         std::thread* listen_thread = new std::thread(&vContext::switch_pigeon, context_);
     }
 

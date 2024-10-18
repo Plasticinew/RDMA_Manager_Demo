@@ -11,6 +11,8 @@ public:
     // change the vector to a pair of two string: device name and device ip
     vContext(std::vector<PigeonDevice> *skip_device_list, std::vector<PigeonDevice> *named_device_list) ;
 
+    void add_device(PigeonDevice device);
+
     void create_connecter(const std::string ip, const std::string port);
     void create_listener(const std::string ip, const std::string port);
 

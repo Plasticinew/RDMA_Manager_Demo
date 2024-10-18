@@ -217,8 +217,8 @@ int DynamicContext::DynamicRead(void* local_addr, uint64_t length, void* remote_
         ibv_gid gid;
         // 33022, 61360441107037958, 61360441107037958, 33022
         *(uint64_t*)gid.raw = (uint64_t)33022;
-        *((uint64_t*)(gid.raw)+1) = (uint64_t)7105540014128381702;
-        gid.global.interface_id = 7105540014128381702;
+        *((uint64_t*)(gid.raw)+1) = (uint64_t)9591092701338669314;
+        gid.global.interface_id = 9591092701338669314;
         gid.global.subnet_prefix = 33022;
         struct ibv_ah_attr ah_attr;
         ah_attr.dlid = lid;
@@ -267,8 +267,8 @@ int DynamicContext::DynamicWrite(void* local_addr, uint64_t length, void* remote
         ibv_gid gid;
         // 33022, 61360441107037958, 61360441107037958, 33022
         *(uint64_t*)gid.raw = (uint64_t)33022;
-        *((uint64_t*)(gid.raw)+1) = (uint64_t)7105540014128381702;
-        gid.global.interface_id = 7105540014128381702;
+        *((uint64_t*)(gid.raw)+1) = (uint64_t)4934949029753786626;
+        gid.global.interface_id = 4934949029753786626;
         gid.global.subnet_prefix = 33022;
         struct ibv_ah_attr ah_attr;
         ah_attr.dlid = lid;
