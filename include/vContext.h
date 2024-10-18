@@ -12,7 +12,7 @@ public:
     vContext(std::vector<PigeonDevice> *skip_device_list, std::vector<PigeonDevice> *named_device_list) ;
 
     void create_connecter(const std::string ip, const std::string port);
-    void create_listener(const std::string ip, const std::string port);
+    void create_listener(const std::string port);
 
     void memory_register(void* addr, size_t length) {
         for(int i = 0; i < context_list_.size(); i++) {

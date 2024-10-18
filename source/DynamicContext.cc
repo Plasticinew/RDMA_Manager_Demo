@@ -121,7 +121,7 @@ void DynamicContext::DynamicListen() {
     memset(&dv_init_attr, 0, sizeof(dv_init_attr));
     memset(&init_attr, 0, sizeof(init_attr));
     
-    cq_ = ibv_create_cq(context_, 128, NULL, NULL, 0);
+    cq_ = ibv_create_cq(context_, 1024, NULL, NULL, 0);
     struct ibv_srq_init_attr srq_init_attr;
  
     memset(&srq_init_attr, 0, sizeof(srq_init_attr));
