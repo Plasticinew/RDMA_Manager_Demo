@@ -4,6 +4,7 @@
 namespace rdmanager {
 
 int vQP::read(void* local_addr, uint64_t length, void* remote_addr, uint32_t rkey, uint32_t lid, uint32_t dct_num) {
+    while(!context_->connected());
     if(context_->connected())
         return read_main(local_addr, length, remote_addr, rkey);
     else{
