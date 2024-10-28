@@ -14,7 +14,7 @@ public:
     void add_device(PigeonDevice device);
 
     void create_connecter(const std::string ip, const std::string port);
-    void create_listener(const std::string ip, const std::string port);
+    void create_listener(const std::string port);
 
     void memory_register(void* addr, size_t length) {
         for(int i = 0; i < context_list_.size(); i++) {

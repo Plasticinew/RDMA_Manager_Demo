@@ -111,13 +111,12 @@ void vContext::create_connecter(const std::string ip, const std::string port) {
     return;
 }
 
-void vContext::create_listener(const std::string ip, const std::string port) {
+void vContext::create_listener(const std::string port) {
     // create listening thread on certain ip
-    ip_ = ip;
     port_ = port;
-    for(auto iter = context_list_.begin(); iter != context_list_.end(); iter ++) {
+    for(int i = 0; i < context_list_.size(); i++) {
         // pigeon_debug("create listener on %s\n", (*iter).get_name().c_str());
-        std::thread* listen_thread = new std::thread(&PigeonContext::PigeonListen, &(*iter), ip, port);
+        std::thread* listen_thread = new std::thread(&PigeonContext::PigeonListen, context_list_[i], named_device_list_[i].ip, port);
     }
     return;
 }
