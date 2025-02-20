@@ -55,8 +55,6 @@ void do_switch(rdmanager::vQP* vqp, void* addr, uint32_t rkey, uint32_t lid, uin
 
 int main() {
     std::vector<PigeonDevice> skip_device_list;
-    // std::vector<std::string> named_device_list = {"mlx5_2", "mlx5_3"};
-    // std::vector<std::string> named_device_list = {"mlx5_4"};
     std::vector<PigeonDevice> named_device_list = {{"mlx5_4", "10.10.1.14"}, {"mlx5_7", "10.10.1.17"}};
     // std::vector<PigeonDevice> named_device_list = {{"mlx5_7", "10.10.1.13"}, {"mlx5_4", "10.10.1.10"}};
     // std::vector<PigeonDevice> named_device_list = {{"mlx5_2", "10.10.1.1"}};
