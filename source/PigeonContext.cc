@@ -195,6 +195,10 @@ void PigeonContext::PigeonAccept(rdma_cm_id* cm_id, uint8_t connect_type, uint16
     memset(cmd_msg, 0, sizeof(CmdMsgBlock));
     msg_mr = PigeonMemReg((void *)cmd_msg, sizeof(CmdMsgBlock));
 
+    cmd_resp = new CmdMsgRespBlock();
+    memset(cmd_resp, 0, sizeof(CmdMsgRespBlock));
+    resp_mr = PigeonMemReg((void *)cmd_resp, sizeof(CmdMsgRespBlock));
+
     rep_pdata.id = -1;
     if(connect_type == CONN_RPC){
         int num = worker_num_;
@@ -230,6 +234,7 @@ void PigeonContext::PigeonAccept(rdma_cm_id* cm_id, uint8_t connect_type, uint16
     conn_param.responder_resources = 16;
     conn_param.initiator_depth = 16;
     conn_param.private_data = &rep_pdata;
+    conn_param.private_data_len = sizeof(rep_pdata);
     conn_param.retry_count = 7;
     conn_param.rnr_retry_count = 7;
     result = rdma_accept(cm_id, &conn_param);
@@ -256,10 +261,14 @@ ibv_mr* PigeonContext::PigeonMemReg(void* addr, size_t length) {
     return mr;
 }
 
-bool PigeonContext::PigeonMemAllocReg(uint64_t &addr, uint32_t &rkey, size_t length) {
+ibv_mr* PigeonContext::PigeonMemAllocReg(uint64_t &addr, uint32_t &rkey, size_t length) {
     addr = (uint64_t)mmap(NULL, length, PROT_READ | PROT_WRITE, MAP_PRIVATE |MAP_ANONYMOUS, -1, 0);
     ibv_mr* mr = ibv_reg_mr(pd_, (void*)addr, length, IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_READ | IBV_ACCESS_REMOTE_WRITE  | IBV_ACCESS_REMOTE_ATOMIC | IBV_ACCESS_MW_BIND);
+    rkey = mr->rkey;
     pigeon_debug("device %s register memory %p, length %lu, rkey %u\n", device_.name.c_str(), addr, length, mr->rkey);
+    if(mr == NULL){
+        perror("mr alloc failed");
+    }
     return mr;
 }
 
@@ -448,7 +457,7 @@ void PigeonContext::PigeonWoker(WorkerInfo *work_info, uint32_t num){
             RegisterRequest *reg_req = (RegisterRequest *)request;
             RegisterResponse *resp_msg = (RegisterResponse *)cmd_resp;
             if (PigeonMemAllocReg(resp_msg->addr, resp_msg->rkey,
-                                            reg_req->size)) {
+                                            reg_req->size) == NULL) {
                 resp_msg->status = RES_FAIL;
             } else {
                 resp_msg->status = RES_OK;
