@@ -15,12 +15,13 @@
 #include <rdma/rdma_cma.h>
 #include <stdarg.h>
 #include <sys/mman.h>
+#include "Msg.h"
 
 #define TIME_NOW (std::chrono::high_resolution_clock::now())
 #define TIME_DURATION_US(start, end) (std::chrono::duration_cast<std::chrono::microseconds>((end) - (start)).count())
 
-const int RESOLVE_TIMEOUT_MS = 5000;
-const int RDMA_TIMEOUT_US = 100000000;  // 10s
+// const int RESOLVE_TIMEOUT_MS = 5000;
+// const int RDMA_TIMEOUT_US = 100000000;  // 10s
 
 struct PigeonDevice {
     std::string name;

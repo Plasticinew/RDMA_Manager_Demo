@@ -7,7 +7,7 @@
 #include <chrono>
 #include <pthread.h>
 
-namespace mralloc {
+namespace rdmanager {
 
 #define NOTIFY_WORK 0xFF
 #define NOTIFY_IDLE 0x00

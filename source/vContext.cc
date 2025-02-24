@@ -45,6 +45,10 @@ vContext::vContext(std::vector<PigeonDevice> *skip_device_list, std::vector<Pige
                     }
                     PigeonContext context(device_list[i], *iter);
                     context_list_.push_back(context);
+                    if(RPC_context_ == NULL) {
+                        PigeonContext* rpc_context = new PigeonContext(device_list[i], *iter);
+                        RPC_context_ = rpc_context;
+                    }
                     DynamicContext r_context(device_list[i], (*iter), context.get_pd());
                     r_context.DynamicListen();
                     back_context_recv_.push_back(r_context);
@@ -104,7 +108,7 @@ void vContext::create_connecter(const std::string ip, const std::string port) {
     // create QP connection with certain ip...
     ip_ = ip;
     port_ = port;
-    context_list_[primary_index_].PigeonConnect(ip, port);
+    context_list_[primary_index_].PigeonConnect(ip, port, 0, CONN_ONESIDE);
     // for (auto iter = context_list_.begin(); iter != context_list_.end(); iter ++) {
     //     (*iter).PigeonConnect(ip, port);
     // }
@@ -118,6 +122,18 @@ void vContext::create_listener(const std::string port) {
         // pigeon_debug("create listener on %s\n", (*iter).get_name().c_str());
         std::thread* listen_thread = new std::thread(&PigeonContext::PigeonListen, context_list_[i], named_device_list_[i].ip, port);
     }
+    return;
+}
+
+void vContext::create_RPC(const std::string ip, const std::string port) {
+    ip_ = ip;
+    port_ = port;
+    RPC_context_->PigeonConnect(ip, port, 0, CONN_RPC);
+    return;
+}
+
+void vContext::alloc_RPC(uint64_t* addr, uint32_t* rkey, uint64_t size) {
+    RPC_context_->PigeonRPCAlloc(addr, rkey, size);
     return;
 }
 

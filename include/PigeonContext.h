@@ -5,12 +5,24 @@ namespace rdmanager{
 
 class PigeonContext{
 public:
+struct WorkerInfo {
+    CmdMsgBlock *cmd_msg;
+    CmdMsgRespBlock *cmd_resp_msg;
+    struct ibv_mr *msg_mr;
+    struct ibv_mr *resp_mr;
+    rdma_cm_id *cm_id;
+    struct ibv_cq *cq;
+}; 
     PigeonContext(ibv_context* context, PigeonDevice device);
 
-    void PigeonConnect(const std::string ip, const std::string port);
+    void PigeonConnect(const std::string ip, const std::string port, uint8_t access_type, uint16_t node);
     void PigeonListen(const std::string ip, const std::string port);
-    void PigeonAccept(rdma_cm_id* cm_id);
+    void PigeonAccept(rdma_cm_id* cm_id, uint8_t connect_type, uint16_t node_id);
     void PigeonMemoryRegister(void* addr, size_t length);
+    ibv_mr* PigeonMemReg(void* addr, size_t length);
+    bool PigeonMemAllocReg(uint64_t &addr, uint32_t &rkey, size_t length);
+    void PigeonRPCAlloc(uint64_t* addr, uint32_t* rkey, size_t size);
+    void PigeonWoker(WorkerInfo *work_info, uint32_t num);
     // Type 2 MW
     void PigeonBind(void* addr, uint64_t length, uint32_t &result_rkey);
     void PigeonUnbind(void* addr);
@@ -18,6 +30,10 @@ public:
     bool connected() {
         return status_ == PigeonStatus::PIGEON_STATUS_CONNECTED;
     }
+
+    void PigeonWrite(ibv_qp* qp, ibv_cq* cq, uint64_t local_addr,
+        uint32_t lkey, uint32_t length,
+        uint64_t remote_addr, uint32_t rkey);
 
     ibv_pd* get_pd() {
         return pd_;
@@ -62,6 +78,22 @@ private:
     ibv_cq* cq_;
     PigeonStatus status_;
     PigeonDevice device_;
+    uint32_t worker_num_;
+    WorkerInfo** worker_info_;
+    std::thread **worker_threads_;
+    bool stop_;
+
+    uint64_t server_cmd_msg_;
+    uint32_t server_cmd_rkey_;
+    uint32_t fusee_rkey;
+    uint32_t remote_size_;
+    uint32_t conn_id_;
+    struct CmdMsgBlock *cmd_msg_;
+    struct CmdMsgRespBlock *cmd_resp_;
+    struct ibv_mr *msg_mr_;
+    struct ibv_mr *resp_mr_;
+    char *reg_buf_;
+    struct ibv_mr *reg_buf_mr_;
 };
 
 }

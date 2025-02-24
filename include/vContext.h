@@ -12,9 +12,10 @@ public:
     vContext(std::vector<PigeonDevice> *skip_device_list, std::vector<PigeonDevice> *named_device_list) ;
 
     void add_device(PigeonDevice device);
-
+    void create_RPC(const std::string ip, const std::string port);
     void create_connecter(const std::string ip, const std::string port);
     void create_listener(const std::string port);
+    void alloc_RPC(uint64_t* addr, uint32_t* rkey, uint64_t size);
 
     void memory_register(void* addr, size_t length) {
         for(int i = 0; i < context_list_.size(); i++) {
@@ -83,6 +84,7 @@ private:
     std::vector<PigeonDevice> skip_device_list_;
     std::vector<PigeonDevice> named_device_list_;
     std::vector<PigeonContext> context_list_ ;
+    PigeonContext* RPC_context_ = NULL;
     std::vector<DynamicContext> back_context_send_ ;
     std::vector<DynamicContext> back_context_recv_ ;
     std::string ip_, port_;

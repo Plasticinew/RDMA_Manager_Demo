@@ -118,5 +118,9 @@ int vQP::write_backup(void* local_addr, uint64_t length, void* remote_addr, uint
     return context_->get_primary_dynamic()->DynamicWrite(local_addr, length, remote_addr, rkey, lid, dct_num);
 }
 
+int vQP::alloc_RPC(uint64_t* addr, uint32_t* rkey, uint64_t size) {
+    context_->alloc_RPC(addr, rkey, size);
+    return 0;
+}
 
 }

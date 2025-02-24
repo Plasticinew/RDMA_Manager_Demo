@@ -64,6 +64,7 @@ int main() {
     for(int i = 0;i < thread_num;i ++){
         rdmanager::vContext* vcontext = new rdmanager::vContext(&skip_device_list, &named_device_list);
         vcontext->memory_register(addr, page_size);
+        vcontext->create_RPC("10.10.1.2", "1145");
         vcontext->create_connecter("10.10.1.2", "1145");
         rdmanager::vQP* vqp = new rdmanager::vQP(vcontext);
         vqp_list[i] = vqp;
