@@ -20,7 +20,7 @@ struct WorkerInfo {
     void PigeonAccept(rdma_cm_id* cm_id, uint8_t connect_type, uint16_t node_id);
     void PigeonMemoryRegister(void* addr, size_t length);
     ibv_mr* PigeonMemReg(void* addr, size_t length);
-    bool PigeonMemAllocReg(uint64_t &addr, uint32_t &rkey, size_t length);
+    ibv_mr* PigeonMemAllocReg(uint64_t &addr, uint32_t &rkey, size_t length);
     void PigeonRPCAlloc(uint64_t* addr, uint32_t* rkey, size_t size);
     void PigeonWoker(WorkerInfo *work_info, uint32_t num);
     // Type 2 MW
