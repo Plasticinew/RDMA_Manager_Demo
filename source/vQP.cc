@@ -119,7 +119,10 @@ int vQP::write_backup(void* local_addr, uint64_t length, void* remote_addr, uint
 }
 
 int vQP::alloc_RPC(uint64_t* addr, uint32_t* rkey, uint64_t size) {
-    context_->alloc_RPC(addr, rkey, size);
+    uint64_t remote_addr; uint32_t remote_rkey;
+    context_->alloc_RPC(&remote_addr, &remote_rkey, size);
+    *addr = remote_addr;
+    *rkey = remote_rkey;
     return 0;
 }
 

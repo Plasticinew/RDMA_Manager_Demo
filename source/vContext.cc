@@ -133,7 +133,10 @@ void vContext::create_RPC(const std::string ip, const std::string port) {
 }
 
 void vContext::alloc_RPC(uint64_t* addr, uint32_t* rkey, uint64_t size) {
-    RPC_context_->PigeonRPCAlloc(addr, rkey, size);
+    uint64_t remote_addr; uint32_t remote_rkey;
+    RPC_context_->PigeonRPCAlloc(&remote_addr, &remote_rkey, size);
+    *addr = remote_addr;
+    *rkey = remote_rkey;
     return;
 }
 
