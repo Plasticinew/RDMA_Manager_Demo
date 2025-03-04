@@ -120,12 +120,12 @@ void PigeonContext::PigeonConnect(const std::string ip, const std::string port, 
         return;
     }
 
-    reg_buf_ = new char[MAX_REMOTE_SIZE];
-    reg_buf_mr_ = PigeonMemReg((void *)reg_buf_, MAX_REMOTE_SIZE);
-    if (!reg_buf_mr_) {
-        perror("ibv_reg_mr m_reg_buf_mr_ fail");
-        return;
-    }
+    // reg_buf_ = new char[MAX_REMOTE_SIZE];
+    // reg_buf_mr_ = PigeonMemReg((void *)reg_buf_, MAX_REMOTE_SIZE);
+    // if (!reg_buf_mr_) {
+    //     perror("ibv_reg_mr m_reg_buf_mr_ fail");
+    //     return;
+    // }
 
     rdma_ack_cm_event(event);
 
