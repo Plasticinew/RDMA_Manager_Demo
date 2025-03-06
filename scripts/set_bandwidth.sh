@@ -1,1 +1,1 @@
-sudo echo $1 > /sys/class/net/ens1f0/device/sriov/0/max_tx_rate 
+sudo echo $1 > /sys/class/net/ens1f0/device/sriov/1/max_tx_rate 
