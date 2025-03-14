@@ -3,17 +3,17 @@ network:
   ethernets:
     enp1s0:
       dhcp4: true
-    enp4s0f0:
-      dhcp4: no
-      addresses: [10.10.1.6/24]
-    enp4s0f1:
-      dhcp4: no
-      addresses: [10.10.1.7/24]
+    # enp4s0f0:
+    #   dhcp4: no
+    #   addresses: [10.10.1.6/24]
+    # enp4s0f1:
+    #   dhcp4: no
+    #   addresses: [10.10.1.7/24]
   bonds:
     bond0:
       interfaces:
-        - enp4s0f0
-        - enp4s0f1
+        - enp4s0
+        - enp5s0
       addresses: [10.10.1.18/24]
       gateway4: 10.10.1.255
       parameters:

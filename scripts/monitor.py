@@ -14,34 +14,40 @@ def read_sriov_stats(file_path):
     return stats['tx_bytes'], stats['tx_packets']
 
 def main():
-    stats_file = "/sys/class/net/ens1f0/device/sriov/1/stats"
-    last_bytes, last_packets = None, None
+    stats_file = [0]*4
+    stats_file[0] = "/sys/class/net/ens1f0/device/sriov/0/stats"
+    stats_file[1] = "/sys/class/net/ens1f0/device/sriov/1/stats"
+    stats_file[2] = "/sys/class/net/ens1f0/device/sriov/2/stats"
+    stats_file[3] = "/sys/class/net/ens1f0/device/sriov/3/stats"
+    last_bytes, last_packets = [-1]*4, [-1]*4
     
     try:
         while True:
-            # 读取当前统计值
-            current_bytes, current_packets = read_sriov_stats(stats_file)
+            for i in range(0,4):
+                # 读取当前统计值
+                current_bytes, current_packets = read_sriov_stats(stats_file[i])
+                
+                # 计算实时速率（第一次不计算）
+                if last_bytes[i] != -1 and last_packets[i] != -1:
+                    time_diff = 1  # 100ms转换为秒
+                    
+                    # 计算带宽（bytes转Mbps）
+                    byte_diff = current_bytes - last_bytes[i]
+                    mbps = (byte_diff * 8) / (time_diff * 1e6)  # 1 Mbps = 1e6 bits
+                    
+                    # 计算包速率（packets/s转千包每秒）
+                    packet_diff = current_packets - last_packets[i]
+                    kpps = packet_diff / (time_diff * 1e3)  # 1 kpps = 1000 packets/s
+                    
+                    # 实时输出结果（同一行刷新）
+                    # print(f"\rBandwidth: {mbps:.2f} Mbps | Packet Rate: {kpps:.2f} kpps", end='', flush=True)
+                    print(f"{i}, {mbps:.2f}, {kpps:.2f}")
             
-            # 计算实时速率（第一次不计算）
-            if last_bytes is not None and last_packets is not None:
-                time_diff = 0.1  # 100ms转换为秒
-                
-                # 计算带宽（bytes转Mbps）
-                byte_diff = current_bytes - last_bytes
-                mbps = (byte_diff * 8) / (time_diff * 1e6)  # 1 Mbps = 1e6 bits
-                
-                # 计算包速率（packets/s转千包每秒）
-                packet_diff = current_packets - last_packets
-                kpps = packet_diff / (time_diff * 1e3)  # 1 kpps = 1000 packets/s
-                
-                # 实时输出结果（同一行刷新）
-                print(f"\rBandwidth: {mbps:.2f} Mbps | Packet Rate: {kpps:.2f} kpps", end='', flush=True)
-            
-            # 更新上一次的值
-            last_bytes, last_packets = current_bytes, current_packets
+                # 更新上一次的值
+                last_bytes[i], last_packets[i] = current_bytes, current_packets
             
             # 等待100ms
-            time.sleep(0.1)
+            time.sleep(1)
     
     except KeyboardInterrupt:
         print("\nMonitoring stopped by user.")

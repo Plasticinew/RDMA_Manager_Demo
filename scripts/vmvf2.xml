@@ -1,0 +1,8 @@
+<hostdev mode='subsystem' type="pci" managed='yes'>
+	<!-- <mac address='52:54:00:53:53:54'/> -->
+	<!-- <mac address='0c:42:a1:e2:a6:95'/> -->
+	<source>
+	<address type='pci' domain='0x0000' bus='0x41' slot='0x00' function='0x4'/>
+	</source>
+	<address type='pci' domain='0x0000' bus='0x04' slot='0x00' function='0x0'/>
+</hostdev>

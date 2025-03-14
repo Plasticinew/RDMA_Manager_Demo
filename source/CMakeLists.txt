@@ -12,3 +12,6 @@ target_link_libraries(Client rdmanager)
 
 add_executable(Server Server.cc)
 target_link_libraries(Server rdmanager)
+
+add_executable(Bench Bench.cc)
+target_link_libraries(Bench rdmanager)
