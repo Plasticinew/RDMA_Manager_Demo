@@ -22,6 +22,7 @@ void DynamicContext::DynamicConnect() {
     
     cq_ = ibv_create_cq(context_, 128, NULL, NULL, 0);
 
+    // 和正常QP创建相同，需要设置参数
     init_attr.qp_type = IBV_QPT_DRIVER;
     init_attr.send_cq = cq_;
     init_attr.recv_cq = cq_;
@@ -30,6 +31,7 @@ void DynamicContext::DynamicConnect() {
     init_attr.cap.max_send_sge = 16;
     init_attr.sq_sig_all = 0;
 
+    // DCQP需要额外设置的内容
     init_attr.comp_mask |= IBV_QP_INIT_ATTR_SEND_OPS_FLAGS | IBV_QP_INIT_ATTR_PD ;
     init_attr.send_ops_flags |= IBV_QP_EX_WITH_SEND | IBV_QP_EX_WITH_RDMA_READ | IBV_QP_EX_WITH_RDMA_WRITE;
  
@@ -39,6 +41,7 @@ void DynamicContext::DynamicConnect() {
     dv_init_attr.create_flags |=
                 MLX5DV_QP_CREATE_DISABLE_SCATTER_TO_CQE;
     
+    // 类型为发送端DCI
     dv_init_attr.dc_init_attr.dc_type = MLX5DV_DCTYPE_DCI;
 
     qp_ = mlx5dv_create_qp(context_, &init_attr, &dv_init_attr);
@@ -55,16 +58,19 @@ void DynamicContext::DynamicConnect() {
     memset(&qp_attr_to_rtr, 0, sizeof(qp_attr_to_rtr));
     memset(&qp_attr_to_rts, 0, sizeof(qp_attr_to_rts));
 
+    // 状态切换为INIT
     qp_attr_to_init.qp_state   = IBV_QPS_INIT;
     qp_attr_to_init.pkey_index = 0;
     qp_attr_to_init.port_num   = 1;
     
+    // 状态切换为RTR
     qp_attr_to_rtr.qp_state          = IBV_QPS_RTR;
     qp_attr_to_rtr.path_mtu          = IBV_MTU_4096;
     qp_attr_to_rtr.min_rnr_timer     = 7;
     qp_attr_to_rtr.ah_attr.port_num  = 1;
     qp_attr_to_rtr.ah_attr.is_global = 1;
 
+    // 状态切换为RTS
     qp_attr_to_rts.qp_state      = IBV_QPS_RTS;
     qp_attr_to_rts.timeout       = 14;
     qp_attr_to_rts.retry_cnt     = 7;
@@ -98,6 +104,8 @@ void DynamicContext::DynamicConnect() {
     struct ibv_qp_attr attr;
     struct ibv_qp_init_attr init_attr_;
     
+    // 获取qp的信息，主要是dct_num
+    // lid和port在IB网络下有效，RoCE网络下不会用到
     ibv_query_qp(qp_, &attr,
             IBV_QP_STATE, &init_attr_);
 
@@ -107,6 +115,7 @@ void DynamicContext::DynamicConnect() {
 
     printf("%d, %d, %d, %d\n", attr.qp_state ,lid_, port_num_, dct_num_);
 
+    // 提取ex qp与mlx qp
     qp_ex_ = ibv_qp_to_qp_ex(qp_);
 
     qp_mlx_ex_ = mlx5dv_qp_ex_from_ibv_qp_ex(qp_ex_);
@@ -145,7 +154,9 @@ void DynamicContext::DynamicListen() {
     init_attr.comp_mask |= IBV_QP_INIT_ATTR_PD;
     init_attr.srq = srq_;
     dv_init_attr.comp_mask = MLX5DV_QP_INIT_ATTR_MASK_DC;
+    // 类型为接收端DCT
     dv_init_attr.dc_init_attr.dc_type = MLX5DV_DCTYPE_DCT;
+    // 需要设置访问的key
     dv_init_attr.dc_init_attr.dct_access_key = 114514;
 
     qp_ = mlx5dv_create_qp(context_, &init_attr, &dv_init_attr);
@@ -154,6 +165,7 @@ void DynamicContext::DynamicListen() {
         perror("create dcqp failed!");
     }
 
+    // 切换为INIT
     ibv_qp_attr qp_attr{};
     qp_attr.qp_state = IBV_QPS_INIT;
     qp_attr.pkey_index = 0;
@@ -171,6 +183,7 @@ void DynamicContext::DynamicListen() {
         abort();
     }
 
+    // 切换为RTR
     qp_attr.qp_state = IBV_QPS_RTR;
     qp_attr.path_mtu = IBV_MTU_4096;
     qp_attr.min_rnr_timer = 7;
@@ -193,6 +206,7 @@ void DynamicContext::DynamicListen() {
 
 	memset(&port_attr, 0, sizeof(port_attr));
 
+    // 查询dct_num与gid
 	ibv_query_port(context_, 1,
 		&port_attr);
 
@@ -206,6 +220,10 @@ void DynamicContext::DynamicListen() {
 
     // dct_num_ = qp_->qp_num;
 
+    // gid未来会设计一个metadata server来存储与共享
+    // 这里选择了明文存储进行测试
+    // 主要有两项：interface_id和subnet_prefix
+    // raw是相同的内容
     printf("%u, %u, %u\n", lid_, port_num_, dct_num_);
     printf("%lu, %lu, %lu, %lu\n", *(uint64_t*)gid.raw, *((uint64_t*)(gid.raw)+1), gid.global.interface_id, gid.global.subnet_prefix);
 
@@ -213,9 +231,12 @@ void DynamicContext::DynamicListen() {
 }
 
 int DynamicContext::DynamicRead(void* local_addr, uint64_t length, void* remote_addr, uint32_t rkey, uint32_t lid, uint32_t dct_num){
+    // 对于同一个目标网卡，ah是可以复用的
     if(ah_ == NULL) {
         ibv_gid gid;
-        // 33022, 61360441107037958, 61360441107037958, 33022
+        // 这里采用了明文存储
+        // 在新环境下测试时需要根据目标server打印的gid进行更新
+        // 未来会替换为从metadata server中获取
         *(uint64_t*)gid.raw = (uint64_t)33022;
         *((uint64_t*)(gid.raw)+1) = (uint64_t)7105540014128381702;
         gid.global.interface_id = 7105540014128381702;
@@ -245,6 +266,7 @@ int DynamicContext::DynamicRead(void* local_addr, uint64_t length, void* remote_
     ibv_wr_complete(qp_ex_);
     auto start = TIME_NOW;
     struct ibv_wc wc;
+    // 与正常读写相同，需要调用poll_cq来确认操作完成
     while(true) {
         if(TIME_DURATION_US(start, TIME_NOW) > RDMA_TIMEOUT_US) {
             std::cerr << "Error, read timeout" << std::endl;
@@ -261,11 +283,10 @@ int DynamicContext::DynamicRead(void* local_addr, uint64_t length, void* remote_
     return 0;
 }
 
-
+// Write与Read类似
 int DynamicContext::DynamicWrite(void* local_addr, uint64_t length, void* remote_addr, uint32_t rkey, uint32_t lid, uint32_t dct_num){
     if(ah_ == NULL) {
         ibv_gid gid;
-        // 33022, 61360441107037958, 61360441107037958, 33022
         *(uint64_t*)gid.raw = (uint64_t)33022;
         *((uint64_t*)(gid.raw)+1) = (uint64_t)4934949029753786626;
         gid.global.interface_id = 4934949029753786626;
@@ -319,6 +340,7 @@ void DynamicContext::PigeonMemoryRegister(void* addr, size_t length) {
     return;
 }
 
+// Bind内存的过程与RCQP相同
 void DynamicContext::PigeonBind(void* addr, uint64_t length, uint32_t &result_rkey){
     uint64_t addr_ = (uint64_t)addr;
     ibv_mw* mw;

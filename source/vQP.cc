@@ -4,10 +4,13 @@
 namespace rdmanager {
 
 int vQP::read(void* local_addr, uint64_t length, void* remote_addr, uint32_t rkey, uint32_t lid, uint32_t dct_num) {
-    while(!context_->connected());
+    // 注释掉的语句目的在于将RCQP创建连接的过程设置为同步行为
+    // while(!context_->connected());
+    // 确认当前RCQP是否创建成功以及可用
     if(context_->connected())
         return read_main(local_addr, length, remote_addr, rkey);
     else{
+        // 不可用时，使用DCQP
         // printf("using temple connect\n");
         return read_backup(local_addr, length, remote_addr, rkey, lid, dct_num);
     }

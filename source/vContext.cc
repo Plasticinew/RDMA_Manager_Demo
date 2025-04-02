@@ -3,6 +3,7 @@
 
 namespace rdmanager{
 
+// 管理一组网卡多个QP的上下文
 vContext::vContext(std::vector<PigeonDevice> *skip_device_list, std::vector<PigeonDevice> *named_device_list) {
     int device_num;
     struct ibv_context** device_list; 
@@ -88,6 +89,8 @@ void vContext::add_device(PigeonDevice device) {
                 if(!(device_attr_ex.odp_caps.general_caps & IBV_ODP_SUPPORT)){
                     printf("Not support odp!\n");
                 }
+                // 创建QP与DCQP
+                // 未来考虑通过共享减少DCQP的个数
                 PigeonContext context(device_list[i], device);
                 context_list_.push_back(context);
                 DynamicContext r_context(device_list[i], device, context.get_pd());
