@@ -54,7 +54,7 @@ void do_mem_cache_test(rdmanager::vQP** vqp, void* addr, int thread_id) {
         global_time[thread_id] = TIME_DURATION_US(start_time, TIME_NOW);
         double total_time = 0;
         for(int i = 0; i < thread_num; i++){
-            total_time += global_time[i]/iteration;
+            total_time += global_time[i]/read_items;
         }
 
         // 主线程打印平均延迟
@@ -103,7 +103,7 @@ void do_mr_cache_test(rdmanager::vQP** vqp, void* addr, int thread_id) {
         global_time[thread_id] = TIME_DURATION_US(start_time, TIME_NOW);
         double total_time = 0;
         for(int i = 0; i < thread_num; i++){
-            total_time += global_time[i]/iteration;
+            total_time += global_time[i]/read_items;
         }
         if(thread_id == 0)
             printf("%lu GB mem, %lf\n", (i+1) * 64 , total_time/thread_num);
@@ -149,7 +149,7 @@ void do_qp_cache_test(rdmanager::vQP** vqp, void* addr, int thread_id) {
         global_time[thread_id] = TIME_DURATION_US(start_time_global, TIME_NOW);
         double total_time = 0;
         for(int k = 0; k < thread_num; k++){
-            total_time += global_time[k]/iteration;
+            total_time += global_time[k]/read_items;
         }
         if(thread_id == 0)
             printf("%lu QP, %lu\n", (i+1) * 64 , total_time/thread_num);    
