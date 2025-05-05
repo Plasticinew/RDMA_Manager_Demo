@@ -13,6 +13,10 @@ struct WorkerInfo {
     rdma_cm_id *cm_id;
     struct ibv_cq *cq;
 }; 
+    
+    uint64_t server_cmd_msg_;
+    uint32_t server_cmd_rkey_;
+    
     PigeonContext(ibv_context* context, PigeonDevice device);
 
     void PigeonConnect(const std::string ip, const std::string port, uint8_t access_type, uint16_t node);
@@ -83,8 +87,6 @@ private:
     std::thread **worker_threads_;
     bool stop_;
 
-    uint64_t server_cmd_msg_;
-    uint32_t server_cmd_rkey_;
     uint32_t fusee_rkey;
     uint32_t remote_size_;
     uint32_t conn_id_;

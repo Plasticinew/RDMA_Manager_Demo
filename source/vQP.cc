@@ -4,7 +4,7 @@
 namespace rdmanager {
 
 int vQP::read(void* local_addr, uint64_t length, void* remote_addr, uint32_t rkey, uint32_t lid, uint32_t dct_num) {
-    // 注释掉的语句目的在于将RCQP创建连接的过程设置为同步行为
+    // 注释掉的语句目的在于将RCQP创建连接的过程设置为同步行为，即不使用DCQP过渡
     // while(!context_->connected());
     // 确认当前RCQP是否创建成功以及可用
     if(context_->connected())
@@ -24,6 +24,7 @@ int vQP::write(void* local_addr, uint64_t length, void* remote_addr, uint32_t rk
 }
 
 int vQP::read_main(void* local_addr, uint64_t length, void* remote_addr, uint32_t rkey) {
+
     struct ibv_sge sge;
     sge.addr = (uint64_t)local_addr;
     sge.length = length;
@@ -69,6 +70,25 @@ int vQP::read_main(void* local_addr, uint64_t length, void* remote_addr, uint32_
 }
 
 int vQP::write_main(void* local_addr, uint64_t length, void* remote_addr, uint32_t rkey) {
+    
+    time_stamp += 1;
+
+    struct ibv_sge log_sge;
+    log_sge.addr = (uint64_t)local_addr;
+    log_sge.length = length;
+    log_sge.lkey = context_->get_lkey();
+
+    struct ibv_send_wr log_wr = {};
+    log_wr.wr_id = 1;
+    log_wr.sg_list = &log_sge;
+    log_wr.num_sge = 1;
+    log_wr.next = NULL;
+    log_wr.opcode = IBV_WR_RDMA_WRITE_WITH_IMM;
+    log_wr.imm_data = htonl(time_stamp);
+    log_wr.send_flags = IBV_SEND_SIGNALED;
+    log_wr.wr.rdma.remote_addr = context_->get_log_addr();
+    log_wr.wr.rdma.rkey = context_->get_log_rkey();
+    
     struct ibv_sge sge;
     sge.addr = (uint64_t)local_addr;
     sge.length = length;
@@ -79,9 +99,9 @@ int vQP::write_main(void* local_addr, uint64_t length, void* remote_addr, uint32
     send_wr.wr_id = 0;
     send_wr.sg_list = &sge;
     send_wr.num_sge = 1;
-    send_wr.next = NULL;
+    send_wr.next = &log_wr;
     send_wr.opcode = IBV_WR_RDMA_WRITE;
-    send_wr.send_flags = IBV_SEND_SIGNALED;
+    send_wr.send_flags = 0;
     send_wr.wr.rdma.remote_addr = (uint64_t)remote_addr;
     send_wr.wr.rdma.rkey = rkey;
 

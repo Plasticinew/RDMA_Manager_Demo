@@ -80,6 +80,13 @@ public:
         return context_list_[primary_index_].connected();
     }
 
+    uint64_t get_log_addr() {
+        return context_list_[primary_index_].server_cmd_msg_;
+    }
+    uint32_t get_log_rkey() {
+        return context_list_[primary_index_].server_cmd_rkey_;
+    }
+
 private:
     std::vector<PigeonDevice> skip_device_list_;
     std::vector<PigeonDevice> named_device_list_;
