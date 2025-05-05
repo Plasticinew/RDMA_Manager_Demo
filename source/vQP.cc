@@ -70,25 +70,25 @@ int vQP::read_main(void* local_addr, uint64_t length, void* remote_addr, uint32_
 }
 
 int vQP::write_main(void* local_addr, uint64_t length, void* remote_addr, uint32_t rkey) {
-    
-    time_stamp += 1;
-
-    struct ibv_sge log_sge;
-    log_sge.addr = (uint64_t)local_addr;
-    log_sge.length = length;
-    log_sge.lkey = context_->get_lkey();
-
     struct ibv_send_wr log_wr = {};
-    log_wr.wr_id = 1;
-    log_wr.sg_list = &log_sge;
-    log_wr.num_sge = 1;
-    log_wr.next = NULL;
-    log_wr.opcode = IBV_WR_RDMA_WRITE_WITH_IMM;
-    log_wr.imm_data = htonl(time_stamp);
-    log_wr.send_flags = IBV_SEND_SIGNALED;
-    log_wr.wr.rdma.remote_addr = context_->get_log_addr();
-    log_wr.wr.rdma.rkey = context_->get_log_rkey();
-    
+    bool use_log = true;
+    if(use_log){
+        time_stamp += 1;
+
+        struct ibv_sge log_sge;
+        log_sge.addr = (uint64_t)local_addr;
+        log_sge.length = length;
+        log_sge.lkey = context_->get_lkey();
+        log_wr.wr_id = 1;
+        log_wr.sg_list = &log_sge;
+        log_wr.num_sge = 1;
+        log_wr.next = NULL;
+        log_wr.opcode = IBV_WR_RDMA_WRITE_WITH_IMM;
+        log_wr.imm_data = htonl(time_stamp);
+        log_wr.send_flags = IBV_SEND_SIGNALED;
+        log_wr.wr.rdma.remote_addr = context_->get_log_addr();
+        log_wr.wr.rdma.rkey = context_->get_log_rkey();
+    }        
     struct ibv_sge sge;
     sge.addr = (uint64_t)local_addr;
     sge.length = length;
@@ -99,7 +99,10 @@ int vQP::write_main(void* local_addr, uint64_t length, void* remote_addr, uint32
     send_wr.wr_id = 0;
     send_wr.sg_list = &sge;
     send_wr.num_sge = 1;
-    send_wr.next = &log_wr;
+    if(use_log)
+        send_wr.next = &log_wr;
+    else
+        send_wr.next = NULL;
     send_wr.opcode = IBV_WR_RDMA_WRITE;
     send_wr.send_flags = 0;
     send_wr.wr.rdma.remote_addr = (uint64_t)remote_addr;
