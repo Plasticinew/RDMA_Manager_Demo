@@ -36,7 +36,7 @@ public:
 
 private:
     vContext* context_;
-    uint64_t time_stamp = 0;
+    uint32_t time_stamp = 0;
 
 };
 

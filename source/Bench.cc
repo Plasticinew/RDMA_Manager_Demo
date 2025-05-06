@@ -21,7 +21,7 @@ uint64_t remote_addr[4096]; uint32_t rkey[4096];
 
 pthread_barrier_t barrier_start;
 
-int global_time[4096];
+double global_time[4096];
 
 /**
  * 测试网卡内存缓存性能（如页表缓存命中率）
@@ -47,11 +47,12 @@ void do_mem_cache_test(rdmanager::vQP** vqp, void* addr, int thread_id) {
 
         // 执行随机页访问，测试缓存效果
         for(uint64_t i = 0; i < read_items; i++){
-            vqp[thread_id]->read_main(addr, page_size, (void*)(remote_addr[0]+page_size*(rand_val()%(j*128*1024))), rkey[0]);
+            vqp[thread_id]->write_main(addr, 4096, (void*)(remote_addr[0]+page_size*(rand_val()%(j*128*1024))), rkey[0]);
         }
 
         // 统计各线程耗时
         global_time[thread_id] = TIME_DURATION_US(start_time, TIME_NOW);
+        pthread_barrier_wait(&barrier_start);   // 线程同步
         double total_time = 0;
         for(int i = 0; i < thread_num; i++){
             total_time += global_time[i]/read_items;
@@ -217,7 +218,7 @@ int main(int argc, char* argv[]) {
 
     std::vector<PigeonDevice> skip_device_list;
     // std::vector<PigeonDevice> named_device_list = {{"mlx5_4", "10.10.1.14"}, {"mlx5_7", "10.10.1.17"}};
-    std::vector<PigeonDevice> named_device_list = {{"mlx5_2", "10.10.1.2"}};
+    std::vector<PigeonDevice> named_device_list = {{"mlx5_2", "10.10.1.1"}};
     // std::vector<PigeonDevice> named_device_list = {{"mlx5_7", "10.10.1.13"}, {"mlx5_4", "10.10.1.10"}};
     // std::vector<PigeonDevice> named_device_list = {{"mlx5_2", "10.10.1.1"}};
     // 分配大页内存
@@ -231,8 +232,8 @@ int main(int argc, char* argv[]) {
         // 创建虚拟上下文，注册内存，建立连接
         rdmanager::vContext* vcontext = new rdmanager::vContext(&skip_device_list, &named_device_list);
         vcontext->memory_register(addr, page_size);
-        vcontext->create_RPC("10.10.1.1", "1145");
-        vcontext->create_connecter("10.10.1.1", "1145");
+        vcontext->create_RPC("10.10.1.2", "1145");
+        vcontext->create_connecter("10.10.1.2", "1145");
         rdmanager::vQP* vqp = new rdmanager::vQP(vcontext);
         vqp_list[i] = vqp;
     }
@@ -242,9 +243,9 @@ int main(int argc, char* argv[]) {
         rdmanager::vContext* vcontext = new rdmanager::vContext(&skip_device_list, &named_device_list);
         vcontext->memory_register(addr, page_size);
         if(i == 0 ){
-            vcontext->create_RPC("10.10.1.1", "1145");
+            vcontext->create_RPC("10.10.1.2", "1145");
         }
-        vcontext->create_connecter("10.10.1.1", "1145");
+        vcontext->create_connecter("10.10.1.2", "1145");
         rdmanager::vQP* vqp = new rdmanager::vQP(vcontext);
         vqp_cache[i] = vqp;
         printf("%d success\n", i);
@@ -256,10 +257,11 @@ int main(int argc, char* argv[]) {
     uint32_t rkey;
     uint32_t lid;
     uint32_t dct;
-    scanf("%s %u %u %u", bench_type, &rkey, &lid, &dct);
+    std::thread* read_thread[4096];
+    printf("%s %u %u %u\n", bench_type, &rkey, &lid, &dct);
     if(bench_type == "read") {
         for(int i = 0;i < thread_num; i++){
-            std::thread* read_thread = new std::thread(&do_read, vqp_list[i], addr, rkey, lid, dct);
+            read_thread[i] = new std::thread(&do_read, vqp_list[i], addr, rkey, lid, dct);
         }
     } else if(bench_type == "write") {
         for(int i = 0; i < 100; i ++) {
@@ -271,7 +273,7 @@ int main(int argc, char* argv[]) {
         }
     } else if(bench_type == "switch") {
         for(int i = 0;i < thread_num; i++)
-            std::thread* read_thread = new std::thread(&do_switch, vqp_list[i], addr, rkey, lid, dct);
+            read_thread[i] = new std::thread(&do_switch, vqp_list[i], addr, rkey, lid, dct);
         long old_val, new_val;
         while(counter.load() < thread_num * iter -1){
             old_val = counter.load();
@@ -280,16 +282,19 @@ int main(int argc, char* argv[]) {
             printf("%lf\n", 1.0*(new_val-old_val)*1000*page_size);
         }
     } else if(bench_type == "cache") {
-        for(int i = 0;i < thread_num; i++){
-            std::thread* read_thread = new std::thread(&do_mem_cache_test, vqp_cache, addr, i);
+        for(int i = 0; i < thread_num; i++){
+            read_thread[i] = new std::thread(&do_mem_cache_test, vqp_cache, addr, i);
+        }
+        for(int i = 0; i < thread_num; i++){
+            read_thread[i]->join();
         }
     } else if(bench_type == "mr") {
         for(int i = 0;i < thread_num; i++){
-            std::thread* read_thread = new std::thread(&do_mr_cache_test, vqp_cache, addr, i);
+            read_thread[i] = new std::thread(&do_mr_cache_test, vqp_cache, addr, i);
         }
     } else if(bench_type == "qp") {
         for(int i = 0;i < thread_num; i++){
-            std::thread* read_thread = new std::thread(&do_qp_cache_test, vqp_cache, addr, i);
+            read_thread[i] = new std::thread(&do_qp_cache_test, vqp_cache, addr, i);
         }
     } else if(bench_type == "exit") {
         return 0;

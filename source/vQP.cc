@@ -71,21 +71,19 @@ int vQP::read_main(void* local_addr, uint64_t length, void* remote_addr, uint32_
 
 int vQP::write_main(void* local_addr, uint64_t length, void* remote_addr, uint32_t rkey) {
     struct ibv_send_wr log_wr = {};
-    bool use_log = true;
+    struct ibv_sge log_sge;
+    bool use_log = false;
     if(use_log){
         time_stamp += 1;
-
-        struct ibv_sge log_sge;
-        log_sge.addr = (uint64_t)local_addr;
-        log_sge.length = length;
-        log_sge.lkey = context_->get_lkey();
+        log_sge.addr = (uint64_t)(&time_stamp);
+        log_sge.length = sizeof(uint32_t);
+        log_sge.lkey = 0;
         log_wr.wr_id = 1;
         log_wr.sg_list = &log_sge;
         log_wr.num_sge = 1;
         log_wr.next = NULL;
-        log_wr.opcode = IBV_WR_RDMA_WRITE_WITH_IMM;
-        log_wr.imm_data = htonl(time_stamp);
-        log_wr.send_flags = IBV_SEND_SIGNALED;
+        log_wr.opcode = IBV_WR_RDMA_WRITE;
+        log_wr.send_flags = IBV_SEND_SIGNALED | IBV_SEND_INLINE;
         log_wr.wr.rdma.remote_addr = context_->get_log_addr();
         log_wr.wr.rdma.rkey = context_->get_log_rkey();
     }        
@@ -104,13 +102,16 @@ int vQP::write_main(void* local_addr, uint64_t length, void* remote_addr, uint32
     else
         send_wr.next = NULL;
     send_wr.opcode = IBV_WR_RDMA_WRITE;
-    send_wr.send_flags = 0;
+    if(use_log)
+        send_wr.send_flags = 0;
+    else
+        send_wr.send_flags = IBV_SEND_SIGNALED;
     send_wr.wr.rdma.remote_addr = (uint64_t)remote_addr;
     send_wr.wr.rdma.rkey = rkey;
 
     ibv_qp* qp = context_->get_qp();
     if (ibv_post_send(qp, &send_wr, &bad_send_wr)) {
-        std::cerr << "Error, ibv_post_send failed" << std::endl;
+        perror("Error, ibv_post_send failed");
         return -1;
     }
 

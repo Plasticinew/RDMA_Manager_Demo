@@ -76,6 +76,7 @@ void PigeonContext::PigeonConnect(const std::string ip, const std::string port, 
     qp_init_attr.cap.max_recv_wr = 1;
     qp_init_attr.cap.max_send_sge = 16;
     qp_init_attr.cap.max_recv_sge = 16;
+    qp_init_attr.cap.max_inline_data = 256;
     qp_init_attr.sq_sig_all = 0;
     result = rdma_create_qp(cm_id_, pd_, &qp_init_attr);
     assert(result == 0);
