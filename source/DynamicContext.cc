@@ -230,7 +230,7 @@ void DynamicContext::DynamicListen() {
     return;
 }
 
-int DynamicContext::DynamicRead(void* local_addr, uint64_t length, void* remote_addr, uint32_t rkey, uint32_t lid, uint32_t dct_num){
+ErrorType DynamicContext::DynamicRead(void* local_addr, uint64_t length, void* remote_addr, uint32_t rkey, uint32_t lid, uint32_t dct_num){
     // 对于同一个目标网卡，ah是可以复用的
     if(ah_ == NULL) {
         ibv_gid gid;
@@ -254,7 +254,7 @@ int DynamicContext::DynamicRead(void* local_addr, uint64_t length, void* remote_
         ah_ = ibv_create_ah(pd_, &ah_attr);
         if (!ah_) {
             perror("create ah failed!");
-            return -1;
+            return SEND_ERROR;
         }
     }
     ibv_wr_start(qp_ex_);
@@ -280,11 +280,11 @@ int DynamicContext::DynamicRead(void* local_addr, uint64_t length, void* remote_
             break;        
         }
     }
-    return 0;
+    return NO_ERROR;
 }
 
 // Write与Read类似
-int DynamicContext::DynamicWrite(void* local_addr, uint64_t length, void* remote_addr, uint32_t rkey, uint32_t lid, uint32_t dct_num){
+ErrorType DynamicContext::DynamicWrite(void* local_addr, uint64_t length, void* remote_addr, uint32_t rkey, uint32_t lid, uint32_t dct_num){
     if(ah_ == NULL) {
         ibv_gid gid;
         *(uint64_t*)gid.raw = (uint64_t)33022;
@@ -304,7 +304,7 @@ int DynamicContext::DynamicWrite(void* local_addr, uint64_t length, void* remote
         ah_ = ibv_create_ah(pd_, &ah_attr);
         if (!ah_) {
             perror("create ah failed!");
-            return -1;
+            return SEND_ERROR;
         }
     }
     ibv_wr_start(qp_ex_);
@@ -329,7 +329,7 @@ int DynamicContext::DynamicWrite(void* local_addr, uint64_t length, void* remote
             break;        
         }
     }
-    return 0;
+    return NO_ERROR;
 }
 
 void DynamicContext::PigeonMemoryRegister(void* addr, size_t length) {

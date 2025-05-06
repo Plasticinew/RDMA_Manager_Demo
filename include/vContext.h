@@ -24,6 +24,10 @@ public:
         }
     }
 
+    ibv_mr* memory_register_temp(void* addr, size_t length) {
+        return context_list_[primary_index_].PigeonMemReg(addr, length);
+    }
+
     void memory_bind(void* addr, size_t length) {
         uint32_t rkey_result = 0;
         for(auto iter = context_list_.begin(); iter != context_list_.end(); iter ++) {

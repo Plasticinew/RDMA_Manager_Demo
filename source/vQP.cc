@@ -3,12 +3,62 @@
 
 namespace rdmanager {
 
-int vQP::read(void* local_addr, uint64_t length, void* remote_addr, uint32_t rkey, uint32_t lid, uint32_t dct_num) {
+void vQP::recovery(void* local_addr, uint64_t length, uint32_t lid, uint32_t dct_num){
+    ErrorType err;
+    int start_ = work_queue_start_;
+    int end_ = work_queue_finished_;
+    if(start_ > end_)
+        end_ += wr_buffer_size;
+    if(start_ == end_){
+        return;
+    }
+    read_log = new CmdMsgBlock();
+    memset(read_log, 0, sizeof(CmdMsgBlock));
+    read_log_mr = context_->memory_register_temp((void *)read_log, sizeof(CmdMsgBlock));
+    read(read_log, sizeof(uint32_t)*64, (void*)(context_->get_log_addr()), context_->get_log_rkey(), lid, dct_num);
+    uint32_t* last_stamp = (uint32_t*)read_log;
+    for(int i = start_; i < end_; i++){
+        if(work_queue_[i%wr_buffer_size].wr_optype_ == READ){
+            err = read((void*)work_queue_[i%wr_buffer_size].wr_local_addr_, 
+                work_queue_[i%wr_buffer_size].wr_length_, 
+                (void*)work_queue_[i%wr_buffer_size].wr_remote_addr_, 
+                work_queue_[i%wr_buffer_size].wr_rkey_, lid, dct_num);
+            printf("fix read error\n");
+            if(err != NO_ERROR){
+                printf("double failure!\n");
+            }
+        }
+        else if(work_queue_[i%wr_buffer_size].wr_length_ != 0 && work_queue_[i%wr_buffer_size].wr_timestamp_ != last_stamp[i%wr_buffer_size]){
+            if(work_queue_[i%wr_buffer_size].wr_optype_ == WRITE){
+                err = write((void*)work_queue_[i%wr_buffer_size].wr_local_addr_, 
+                    work_queue_[i%wr_buffer_size].wr_length_, 
+                    (void*)work_queue_[i%wr_buffer_size].wr_remote_addr_, 
+                    work_queue_[i%wr_buffer_size].wr_rkey_, lid, dct_num);
+                printf("fix write error\n");
+                if(err != NO_ERROR){
+                    printf("double failure!\n");
+                }
+            }
+        }
+    }
+}
+
+ErrorType vQP::read(void* local_addr, uint64_t length, void* remote_addr, uint32_t rkey, uint32_t lid, uint32_t dct_num) {
     // 注释掉的语句目的在于将RCQP创建连接的过程设置为同步行为，即不使用DCQP过渡
     // while(!context_->connected());
     // 确认当前RCQP是否创建成功以及可用
-    if(context_->connected())
-        return read_main(local_addr, length, remote_addr, rkey);
+    if(context_->connected()){
+        ErrorType err = read_main(local_addr, length, remote_addr, rkey);
+        if(err == SEND_ERROR){
+            context_->switch_pigeon();
+            printf("change nic\n");
+            return read(local_addr, length, remote_addr, rkey, lid, dct_num);
+        } else if(err == RECIEVE_ERROR){
+            context_->switch_pigeon();
+            recovery(local_addr, length, lid, dct_num);
+            return read(local_addr, length, remote_addr, rkey, lid, dct_num);
+        }
+    }
     else{
         // 不可用时，使用DCQP
         // printf("using temple connect\n");
@@ -16,23 +66,24 @@ int vQP::read(void* local_addr, uint64_t length, void* remote_addr, uint32_t rke
     }
 }
 
-int vQP::write(void* local_addr, uint64_t length, void* remote_addr, uint32_t rkey, uint32_t lid, uint32_t dct_num) {
-    if(context_->connected())
+ErrorType vQP::write(void* local_addr, uint64_t length, void* remote_addr, uint32_t rkey, uint32_t lid, uint32_t dct_num) {
+    if(context_->connected()) {
         return write_main(local_addr, length, remote_addr, rkey);
-    else
+    } else
         return write_backup(local_addr, length, remote_addr, rkey, lid, dct_num);
 }
 
-int vQP::read_main(void* local_addr, uint64_t length, void* remote_addr, uint32_t rkey) {
+ErrorType vQP::read_main(void* local_addr, uint64_t length, void* remote_addr, uint32_t rkey) {
 
     struct ibv_sge sge;
     sge.addr = (uint64_t)local_addr;
     sge.length = length;
     sge.lkey = context_->get_lkey();
+    time_stamp += 1;
 
     struct ibv_send_wr send_wr = {};
     struct ibv_send_wr *bad_send_wr;
-    send_wr.wr_id = 0;
+    send_wr.wr_id = time_stamp;
     send_wr.sg_list = &sge;
     send_wr.num_sge = 1;
     send_wr.next = NULL;
@@ -44,11 +95,19 @@ int vQP::read_main(void* local_addr, uint64_t length, void* remote_addr, uint32_
     ibv_qp* qp = context_->get_qp();
     if (ibv_post_send(qp, &send_wr, &bad_send_wr)) {
         std::cerr << "Error, ibv_post_send failed" << std::endl;
-        return -1;
+        return SEND_ERROR;
     }
 
+    work_queue_[work_queue_finished_].wr_timestamp_ = time_stamp;
+    work_queue_[work_queue_finished_].wr_local_addr_ = (uint64_t)local_addr;
+    work_queue_[work_queue_finished_].wr_length_ = length;
+    work_queue_[work_queue_finished_].wr_remote_addr_ = (uint64_t)remote_addr;
+    work_queue_[work_queue_finished_].wr_rkey_ = rkey;
+    work_queue_[work_queue_finished_].wr_optype_ = READ;
+    work_queue_finished_ = (work_queue_finished_ + 1)%wr_buffer_size;
+
     auto start = TIME_NOW;
-    int ret = -1;
+    ErrorType ret = RECIEVE_ERROR;
     struct ibv_wc wc;
     ibv_cq* cq = context_->get_cq();
     while(true) {
@@ -61,7 +120,21 @@ int vQP::read_main(void* local_addr, uint64_t length, void* remote_addr, uint32_
                 std::cerr << "Error, read failed: " << wc.status << std::endl;
                 break;
             }
-            ret = 0;
+            ret = NO_ERROR;
+            int start_ = work_queue_start_;
+            int end_ = work_queue_finished_;
+            if(start_ > end_)
+                end_ += wr_buffer_size;
+            if(start_ == end_){
+                for(int i = start_; i < end_; i++){
+                    if(work_queue_[i%wr_buffer_size].wr_timestamp_ == wc.wr_id){
+                        work_queue_[work_queue_finished_].wr_length_ = 0;
+                    }
+                    if(work_queue_[i%wr_buffer_size].wr_length_ == 0 && i%wr_buffer_size == work_queue_start_){
+                        work_queue_start_ = (work_queue_start_ + 1)%wr_buffer_size;
+                    }
+                }
+            }
             break;
         }
     }
@@ -69,7 +142,7 @@ int vQP::read_main(void* local_addr, uint64_t length, void* remote_addr, uint32_
     return ret;
 }
 
-int vQP::write_main(void* local_addr, uint64_t length, void* remote_addr, uint32_t rkey) {
+ErrorType vQP::write_main(void* local_addr, uint64_t length, void* remote_addr, uint32_t rkey) {
     struct ibv_send_wr log_wr = {};
     struct ibv_sge log_sge;
     bool use_log = false;
@@ -84,7 +157,7 @@ int vQP::write_main(void* local_addr, uint64_t length, void* remote_addr, uint32
         log_wr.next = NULL;
         log_wr.opcode = IBV_WR_RDMA_WRITE;
         log_wr.send_flags = IBV_SEND_SIGNALED | IBV_SEND_INLINE;
-        log_wr.wr.rdma.remote_addr = context_->get_log_addr();
+        log_wr.wr.rdma.remote_addr = context_->get_log_addr() + work_queue_finished_ * sizeof(uint32_t);
         log_wr.wr.rdma.rkey = context_->get_log_rkey();
     }        
     struct ibv_sge sge;
@@ -112,11 +185,18 @@ int vQP::write_main(void* local_addr, uint64_t length, void* remote_addr, uint32
     ibv_qp* qp = context_->get_qp();
     if (ibv_post_send(qp, &send_wr, &bad_send_wr)) {
         perror("Error, ibv_post_send failed");
-        return -1;
+        return SEND_ERROR;
     }
+    work_queue_[work_queue_finished_].wr_timestamp_ = time_stamp;
+    work_queue_[work_queue_finished_].wr_local_addr_ = (uint64_t)local_addr;
+    work_queue_[work_queue_finished_].wr_length_ = length;
+    work_queue_[work_queue_finished_].wr_remote_addr_ = (uint64_t)remote_addr;
+    work_queue_[work_queue_finished_].wr_rkey_ = rkey;
+    work_queue_[work_queue_finished_].wr_optype_ = WRITE;
+    work_queue_finished_ = (work_queue_finished_ + 1)%wr_buffer_size;
 
     auto start = TIME_NOW;
-    int ret = -1;
+    ErrorType ret = RECIEVE_ERROR;
     struct ibv_wc wc;
     ibv_cq* cq = context_->get_cq();
     while(true) {
@@ -129,7 +209,21 @@ int vQP::write_main(void* local_addr, uint64_t length, void* remote_addr, uint32
                 std::cerr << "Error, write failed: " << wc.status << std::endl;
                 break;
             }
-            ret = 0;
+            ret = NO_ERROR;
+            int start_ = work_queue_start_;
+            int end_ = work_queue_finished_;
+            if(start_ > end_)
+                end_ += wr_buffer_size;
+            if(start_ != end_){
+                for(int i = start_; i < end_; i++){
+                    if(work_queue_[i%wr_buffer_size].wr_timestamp_ == wc.wr_id){
+                        work_queue_[work_queue_finished_].wr_length_ = 0;
+                    }
+                    if(work_queue_[i%wr_buffer_size].wr_length_ == 0 && i%wr_buffer_size == work_queue_start_){
+                        work_queue_start_ = (work_queue_start_ + 1)%wr_buffer_size;
+                    }
+                }
+            }
             break;
         }
     }
@@ -137,11 +231,11 @@ int vQP::write_main(void* local_addr, uint64_t length, void* remote_addr, uint32
     return ret;
 }
 
-int vQP::read_backup(void* local_addr, uint64_t length, void* remote_addr, uint32_t rkey, uint32_t lid, uint32_t dct_num) {
+ErrorType vQP::read_backup(void* local_addr, uint64_t length, void* remote_addr, uint32_t rkey, uint32_t lid, uint32_t dct_num) {
     return context_->get_primary_dynamic()->DynamicRead(local_addr, length, remote_addr, rkey, lid, dct_num);
 }
 
-int vQP::write_backup(void* local_addr, uint64_t length, void* remote_addr, uint32_t rkey, uint32_t lid, uint32_t dct_num) {
+ErrorType vQP::write_backup(void* local_addr, uint64_t length, void* remote_addr, uint32_t rkey, uint32_t lid, uint32_t dct_num) {
     return context_->get_primary_dynamic()->DynamicWrite(local_addr, length, remote_addr, rkey, lid, dct_num);
 }
 

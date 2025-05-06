@@ -31,6 +31,12 @@ enum ConnMethod {CONN_RPC, CONN_ONESIDE, CONN_FUSEE};
 
 enum MRType:uint64_t {MR_IDLE, MR_FREE, MR_TRANSFER};
 
+enum ErrorType {NO_ERROR, SEND_ERROR, RECIEVE_ERROR};
+
+enum OpType {READ, WRITE, CAS, FAA};
+
+const int wr_buffer_size = 64;
+
 #define CHECK_RDMA_MSG_SIZE(T) \
     static_assert(sizeof(T) < MAX_MSG_SIZE, #T " msg size is too big!")
 

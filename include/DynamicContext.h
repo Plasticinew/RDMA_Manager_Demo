@@ -11,8 +11,8 @@ public:
 
     void DynamicConnect();
     void DynamicListen();
-    int DynamicRead(void* local_addr, uint64_t length, void* remote_addr, uint32_t rkey, uint32_t lid, uint32_t dct_num);
-    int DynamicWrite(void* local_addr, uint64_t length, void* remote_addr, uint32_t rkey, uint32_t lid, uint32_t dct_num);
+    ErrorType DynamicRead(void* local_addr, uint64_t length, void* remote_addr, uint32_t rkey, uint32_t lid, uint32_t dct_num);
+    ErrorType DynamicWrite(void* local_addr, uint64_t length, void* remote_addr, uint32_t rkey, uint32_t lid, uint32_t dct_num);
     void PigeonMemoryRegister(void* addr, size_t length);
     // Type 2 MW
     void PigeonBind(void* addr, uint64_t length, uint32_t &result_rkey);

@@ -13,7 +13,10 @@ struct WorkerInfo {
     rdma_cm_id *cm_id;
     struct ibv_cq *cq;
 }; 
-    
+    struct CmdMsgBlock *cmd_msg_;
+    struct CmdMsgRespBlock *cmd_resp_;
+    struct ibv_mr *msg_mr_;
+    struct ibv_mr *resp_mr_;
     uint64_t server_cmd_msg_;
     uint32_t server_cmd_rkey_;
     
@@ -90,12 +93,10 @@ private:
     uint32_t fusee_rkey;
     uint32_t remote_size_;
     uint32_t conn_id_;
-    struct CmdMsgBlock *cmd_msg_;
-    struct CmdMsgRespBlock *cmd_resp_;
-    struct ibv_mr *msg_mr_;
-    struct ibv_mr *resp_mr_;
     char *reg_buf_;
     struct ibv_mr *reg_buf_mr_;
+    CmdMsgBlock* qp_log_[1024];
+    struct ibv_mr* qp_log_list_[1024];
 };
 
 }

@@ -200,6 +200,12 @@ void PigeonContext::PigeonAccept(rdma_cm_id* cm_id, uint8_t connect_type, uint16
     memset(cmd_resp, 0, sizeof(CmdMsgRespBlock));
     resp_mr = PigeonMemReg((void *)cmd_resp, sizeof(CmdMsgRespBlock));
 
+    if(qp_log_list_[node_id] == NULL){
+        qp_log_[node_id] = new CmdMsgBlock();    
+        memset(qp_log_[node_id], 0, sizeof(CmdMsgBlock));
+        qp_log_list_[node_id] = PigeonMemReg((void *)qp_log_[node_id], sizeof(CmdMsgBlock));
+    }
+
     rep_pdata.id = -1;
     if(connect_type == CONN_RPC){
         int num = worker_num_;
@@ -225,8 +231,14 @@ void PigeonContext::PigeonAccept(rdma_cm_id* cm_id, uint8_t connect_type, uint16
         rep_pdata.id = num;
         worker_num_ += 1;
     } 
-    rep_pdata.buf_addr = (uintptr_t)cmd_msg;
-    rep_pdata.buf_rkey = msg_mr->rkey;
+    if(connect_type == CONN_RPC){
+        rep_pdata.buf_addr = (uintptr_t)cmd_msg;
+        rep_pdata.buf_rkey = msg_mr->rkey;
+    }
+    else{
+        rep_pdata.buf_addr = (uintptr_t)qp_log_[node_id];
+        rep_pdata.buf_rkey = qp_log_list_[node_id]->rkey;
+    }
     rep_pdata.size = sizeof(CmdMsgRespBlock);
     rep_pdata.global_rkey_ = 0;
 
