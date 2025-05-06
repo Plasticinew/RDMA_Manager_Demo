@@ -67,6 +67,9 @@ struct PData {
     uint32_t global_rkey_;
     uint64_t section_header_;
     uint64_t heap_start_;
+    uint64_t gid1, gid2, interface, subnet;
+    uint16_t lid_;
+    uint32_t dct_num_;
 };
 
 struct CmdMsgBlock {

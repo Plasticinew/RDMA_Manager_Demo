@@ -1,6 +1,9 @@
 
+#pragma once
+
 #include "PigeonCommon.h"
 #include <infiniband/mlx5dv.h>
+#include "hiredis/hiredis.h"
 // #include <infiniband/verbs_exp.h>
 
 namespace rdmanager{
@@ -17,6 +20,8 @@ public:
     // Type 2 MW
     void PigeonBind(void* addr, uint64_t length, uint32_t &result_rkey);
     void PigeonUnbind(void* addr);
+
+    void CreateAh(uint64_t gid1, uint64_t gid2, uint64_t interface, uint64_t subnet, uint32_t lid);
 
     ibv_qp* get_qp() {
         return qp_;
@@ -46,6 +51,10 @@ public:
         pigeon_debug("device name: %s\n", device_.name.c_str());
         pigeon_debug("device ip: %s\n", device_.ip.c_str());
     }
+    uint64_t gid1, gid2, interface, subnet;
+    uint8_t port_num_;
+    uint16_t lid_;
+    uint32_t dct_num_;
 
 private:
     ibv_context* context_;
@@ -56,14 +65,12 @@ private:
     ibv_qp* qp_;
     ibv_qp_ex* qp_ex_;
     mlx5dv_qp_ex* qp_mlx_ex_;
-    uint8_t port_num_;
-    uint16_t lid_;
-    uint32_t dct_num_;
     ibv_cq* cq_;
     ibv_srq* srq_;
     ibv_ah* ah_;
     PigeonStatus status_;
     PigeonDevice device_;
+
 };
 
 }

@@ -5,7 +5,7 @@ set(BASE_SOURCE vContext.cc vQP.cc PigeonContext.cc DynamicContext.cc)
 
 add_library(rdmanager ${BASE_SOURCE})
 
-target_link_libraries(rdmanager ibverbs rdmacm pthread rt mlx5)
+target_link_libraries(rdmanager ibverbs rdmacm pthread rt mlx5 hiredis)
 
 add_executable(Client Client.cc)
 target_link_libraries(Client rdmanager)

@@ -3,6 +3,9 @@
 
 namespace rdmanager{
 
+extern std::map<std::string, DynamicContext*> r_context;
+extern std::map<std::string, DynamicContext*> s_context;
+
 // 管理一组网卡多个QP的上下文
 vContext::vContext(std::vector<PigeonDevice> *skip_device_list, std::vector<PigeonDevice> *named_device_list) {
     int device_num;
@@ -50,12 +53,20 @@ vContext::vContext(std::vector<PigeonDevice> *skip_device_list, std::vector<Pige
                         PigeonContext* rpc_context = new PigeonContext(device_list[i], *iter);
                         RPC_context_ = rpc_context;
                     }
-                    DynamicContext r_context(device_list[i], (*iter), context.get_pd());
-                    r_context.DynamicListen();
-                    back_context_recv_.push_back(r_context);
-                    DynamicContext s_context(device_list[i], (*iter), context.get_pd());
-                    s_context.DynamicConnect();
-                    back_context_send_.push_back(s_context);
+                    if(r_context.find((*iter).name) == r_context.end()){
+                        r_context[(*iter).name] = new DynamicContext(device_list[i], (*iter), context.get_pd());
+                        r_context[(*iter).name]->DynamicListen();
+                    }
+                    back_context_recv_.push_back(r_context[(*iter).name]);
+                    if(s_context.find((*iter).name) == s_context.end()){
+                        s_context[(*iter).name] = new DynamicContext(device_list[i], (*iter), context.get_pd());
+                        s_context[(*iter).name]->DynamicConnect();
+                    }
+                    back_context_send_.push_back(s_context[(*iter).name]);
+                    context.SetDynamicConnection(r_context[(*iter).name]);
+                    // DynamicContext s_context(device_list[i], (*iter), context.get_pd());
+                    // s_context.DynamicConnect();
+                    // back_context_send_.push_back(s_context);
                 }
             }
         }
@@ -93,12 +104,23 @@ void vContext::add_device(PigeonDevice device) {
                 // 未来考虑通过共享减少DCQP的个数
                 PigeonContext context(device_list[i], device);
                 context_list_.push_back(context);
-                DynamicContext r_context(device_list[i], device, context.get_pd());
-                r_context.DynamicListen();
-                back_context_recv_.push_back(r_context);
-                DynamicContext s_context(device_list[i], device, context.get_pd());
-                s_context.DynamicConnect();
-                back_context_send_.push_back(s_context);
+                // DynamicContext r_context(device_list[i], device, context.get_pd());
+                // r_context.DynamicListen();
+                // back_context_recv_.push_back(r_context);
+                // DynamicContext s_context(device_list[i], device, context.get_pd());
+                // s_context.DynamicConnect();
+                // back_context_send_.push_back(s_context);
+                if(r_context.find(device.name) == r_context.end()){
+                    r_context[device.name] = new DynamicContext(device_list[i], device, context.get_pd());
+                    r_context[device.name]->DynamicListen();
+                }
+                back_context_recv_.push_back(r_context[device.name]);
+                if(s_context.find(device.name) == s_context.end()){
+                    s_context[device.name] = new DynamicContext(device_list[i], device, context.get_pd());
+                    s_context[device.name]->DynamicConnect();
+                }
+                back_context_send_.push_back(s_context[device.name]);
+                context.SetDynamicConnection(r_context[device.name]);
                 break;
             }
         }
@@ -112,6 +134,13 @@ void vContext::create_connecter(const std::string ip, const std::string port) {
     ip_ = ip;
     port_ = port;
     context_list_[primary_index_].PigeonConnect(ip, port, 0, CONN_ONESIDE);
+    gid1 = context_list_[primary_index_].gid1;
+    gid2 = context_list_[primary_index_].gid2;
+    interface = context_list_[primary_index_].interface;
+    subnet = context_list_[primary_index_].subnet;
+    lid_ = context_list_[primary_index_].lid_;
+    dct_num_ = context_list_[primary_index_].dct_num_;
+    get_primary_dynamic()->CreateAh(gid1, gid2, interface, subnet, lid_); 
     // for (auto iter = context_list_.begin(); iter != context_list_.end(); iter ++) {
     //     (*iter).PigeonConnect(ip, port);
     // }

@@ -101,6 +101,13 @@ void PigeonContext::PigeonConnect(const std::string ip, const std::string port, 
     server_cmd_msg_ = server_pdata.buf_addr;
     server_cmd_rkey_ = server_pdata.buf_rkey;
     conn_id_ = server_pdata.id;
+
+    gid1 = server_pdata.gid1;
+    gid2 = server_pdata.gid2;
+    interface = server_pdata.interface;
+    subnet = server_pdata.subnet;
+    lid_ = server_pdata.lid_;
+    dct_num_ = server_pdata.dct_num_;
     
     assert(server_pdata.size == sizeof(CmdMsgBlock));
 
@@ -241,6 +248,13 @@ void PigeonContext::PigeonAccept(rdma_cm_id* cm_id, uint8_t connect_type, uint16
     }
     rep_pdata.size = sizeof(CmdMsgRespBlock);
     rep_pdata.global_rkey_ = 0;
+    rep_pdata.gid1 = dynamic_context->gid1;
+    rep_pdata.gid2 = dynamic_context->gid2;
+    rep_pdata.interface = dynamic_context->interface;
+    rep_pdata.subnet = dynamic_context->subnet;
+    rep_pdata.lid_ = dynamic_context->lid_;
+    rep_pdata.dct_num_ = dynamic_context->dct_num_;
+
 
     rdma_conn_param conn_param;
     memset(&conn_param, 0, sizeof(conn_param));

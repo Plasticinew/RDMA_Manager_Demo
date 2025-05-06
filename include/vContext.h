@@ -3,12 +3,21 @@
 #include "PigeonContext.h"
 #include "PigeonCommon.h"
 #include "DynamicContext.h"
+#include <map>
+#include <string>
 
 namespace rdmanager{
+
+static std::map<std::string, DynamicContext*> r_context;
+static std::map<std::string, DynamicContext*> s_context;
 
 class vContext{
 public:
     // change the vector to a pair of two string: device name and device ip
+    uint64_t gid1, gid2, interface, subnet;
+    uint16_t lid_;
+    uint32_t dct_num_;
+    
     vContext(std::vector<PigeonDevice> *skip_device_list, std::vector<PigeonDevice> *named_device_list) ;
 
     void add_device(PigeonDevice device);
@@ -20,7 +29,7 @@ public:
     void memory_register(void* addr, size_t length) {
         for(int i = 0; i < context_list_.size(); i++) {
             context_list_[i].PigeonMemoryRegister(addr, length);
-            back_context_send_[i].PigeonMemoryRegister(addr, length);
+            back_context_send_[i]->PigeonMemoryRegister(addr, length);
         }
     }
 
@@ -71,7 +80,7 @@ public:
     }
 
     DynamicContext* get_primary_dynamic() {
-        return &back_context_send_[primary_index_];
+        return back_context_send_[primary_index_];
     }
 
     void switch_pigeon() {
@@ -96,8 +105,8 @@ private:
     std::vector<PigeonDevice> named_device_list_;
     std::vector<PigeonContext> context_list_ ;
     PigeonContext* RPC_context_ = NULL;
-    std::vector<DynamicContext> back_context_send_ ;
-    std::vector<DynamicContext> back_context_recv_ ;
+    std::vector<DynamicContext*> back_context_send_ ;
+    std::vector<DynamicContext*> back_context_recv_ ;
     std::string ip_, port_;
     int primary_index_ = 0;
     int secondary_index_ = 1;

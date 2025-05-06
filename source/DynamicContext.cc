@@ -225,10 +225,62 @@ void DynamicContext::DynamicListen() {
     // 主要有两项：interface_id和subnet_prefix
     // raw是相同的内容
     printf("%u, %u, %u\n", lid_, port_num_, dct_num_);
+    // struct timeval timeout = { 1, 500000 }; // 1.5 seconds
+    // redisContext *redis_conn;
+    // redisReply *redis_reply;
+    // redis_conn = redisConnectWithTimeout("10.10.1.2", 2222, timeout);
+    // // redis_reply = (redisReply*)redisCommand(redis_conn,"SET bench_start 0");
+    // // freeReplyObject(redis_reply);
+    // if (redis_conn == NULL || redis_conn->err) {
+    //     if (redis_conn) {
+    //         printf("Connection error: %s\n", redis_conn->errstr);
+    //         redisFree(redis_conn);
+    //     } else {
+    //         printf("Connection error: can't allocate redis context\n");
+    //     }
+    //     exit(1);
+    // }
+    // std::string node_name = std::to_string();
+    // redis_reply = (redisReply*)redisCommand(redis_conn, "SET node1_lid_ %s"), "node"+.c_str(), std::to_string(lid_).c_str();
+    // freeReplyObject(redis_reply);
+    // redis_reply = (redisReply*)redisCommand(redis_conn, "SET node1_dct_num_ %s"), std::to_string(dct_num_).c_str();
+    // freeReplyObject(redis_reply);
     printf("%lu, %lu, %lu, %lu\n", *(uint64_t*)gid.raw, *((uint64_t*)(gid.raw)+1), gid.global.interface_id, gid.global.subnet_prefix);
+    gid1 = *(uint64_t*)gid.raw;
+    gid2 = *((uint64_t*)(gid.raw)+1);
+    interface = gid.global.interface_id;
+    subnet = gid.global.subnet_prefix;
+    // redis_reply = (redisReply*)redisCommand(redis_conn, "SET node1_lid_ %s"), std::to_string(lid_).c_str();
 
     return;
 }
+
+void DynamicContext::CreateAh(uint64_t gid1, uint64_t gid2, uint64_t interface, uint64_t subnet, uint32_t lid){
+    ibv_gid gid;
+    // 这里采用了明文存储
+    // 在新环境下测试时需要根据目标server打印的gid进行更新
+    // 未来会替换为从metadata server中获取
+    *(uint64_t*)gid.raw = gid1;
+    *((uint64_t*)(gid.raw)+1) = gid2;
+    gid.global.interface_id = interface;
+    gid.global.subnet_prefix = subnet;
+    struct ibv_ah_attr ah_attr;
+    ah_attr.dlid = lid;
+    ah_attr.port_num = 1;
+    ah_attr.is_global = 1;
+    ah_attr.grh.hop_limit = 1;
+    ah_attr.grh.sgid_index = 1;
+    ah_attr.grh.dgid = gid;
+    // ah_attr.sl = 1;
+    // ah_attr.src_path_bits = 0;
+    
+    ah_ = ibv_create_ah(pd_, &ah_attr);
+    if (!ah_) {
+        perror("create ah failed!");
+        return ;
+    }
+}
+
 
 ErrorType DynamicContext::DynamicRead(void* local_addr, uint64_t length, void* remote_addr, uint32_t rkey, uint32_t lid, uint32_t dct_num){
     // 对于同一个目标网卡，ah是可以复用的
