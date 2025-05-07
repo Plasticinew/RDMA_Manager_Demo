@@ -1,9 +1,13 @@
 
 #include "PigeonCommon.h"
 #include "PigeonContext.h"
+#include "DynamicContext.h"
 #include "Msg.h"
 
 namespace rdmanager{
+
+extern std::map<std::string, DynamicContext> r_context;
+extern std::map<std::string, DynamicContext> s_context;
 
 PigeonContext::PigeonContext(ibv_context* context, PigeonDevice device) {
     context_ = context;
@@ -276,7 +280,7 @@ void PigeonContext::PigeonAccept(rdma_cm_id* cm_id, uint8_t connect_type, uint16
 
 void PigeonContext::PigeonMemoryRegister(void* addr, size_t length) {
     ibv_mr* mr = ibv_reg_mr(pd_, addr, length, IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_READ | IBV_ACCESS_REMOTE_WRITE  | IBV_ACCESS_REMOTE_ATOMIC | IBV_ACCESS_MW_BIND);
-    pigeon_debug("device %s register memory %p, length %lu, rkey %u\n", device_.name.c_str(), addr, length, mr->rkey);
+    // pigeon_debug("device %s register memory %p, length %lu, rkey %u\n", device_.name.c_str(), addr, length, mr->rkey);
     mr_ = mr;
     assert(mr != NULL);
     return;
@@ -284,6 +288,7 @@ void PigeonContext::PigeonMemoryRegister(void* addr, size_t length) {
 
 ibv_mr* PigeonContext::PigeonMemReg(void* addr, size_t length) {
     ibv_mr* mr = ibv_reg_mr(pd_, addr, length, IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_READ | IBV_ACCESS_REMOTE_WRITE  | IBV_ACCESS_REMOTE_ATOMIC | IBV_ACCESS_MW_BIND);
+    // pigeon_debug("device %s register memory %p, length %lu, rkey %u\n", device_.name.c_str(), addr, length, mr->rkey);
     return mr;
 }
 
@@ -291,7 +296,7 @@ ibv_mr* PigeonContext::PigeonMemAllocReg(uint64_t &addr, uint32_t &rkey, size_t 
     addr = (uint64_t)mmap(NULL, length, PROT_READ | PROT_WRITE, MAP_PRIVATE |MAP_ANONYMOUS, -1, 0);
     ibv_mr* mr = ibv_reg_mr(pd_, (void*)addr, length, IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_READ | IBV_ACCESS_REMOTE_WRITE  | IBV_ACCESS_REMOTE_ATOMIC | IBV_ACCESS_MW_BIND);
     rkey = mr->rkey;
-    pigeon_debug("device %s register memory %p, length %lu, rkey %u\n", device_.name.c_str(), addr, length, mr->rkey);
+    // pigeon_debug("device %s register memory %p, length %lu, rkey %u\n", device_.name.c_str(), addr, length, mr->rkey);
     if(mr == NULL){
         perror("mr alloc failed");
     }
