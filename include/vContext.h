@@ -7,6 +7,7 @@
 #include <string>
 #include <cstdlib>
 #include <random>
+#include <unistd.h>
 
 namespace rdmanager{
 
@@ -134,10 +135,11 @@ public:
         command += context_list_[recovery_primary].get_netname();
         command += " up";
         system(command.c_str());
+        // usleep(1000);
         if(!context_list_[recovery_primary].connected()) {
             add_device(context_list_[recovery_primary].device_);
-            memory_register((void*)addr_remote, length_remote);
-            create_RPC(ip_, port_);
+            context_list_[recovery_primary].PigeonMemoryRegister((void*)addr_remote, length_remote);
+            // create_RPC(ip_, port_);
             secondary_index_ = context_list_.size()-1;
         }
     }
