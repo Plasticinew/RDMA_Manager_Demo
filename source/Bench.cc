@@ -181,8 +181,8 @@ void do_switch(rdmanager::vQP** vqp, void* addr, uint32_t lid, uint32_t dct_num,
         vqp[0]->alloc_RPC(&remote_addr[0], &rkey[0], page_size*1024*1024*16);
     auto start_time = TIME_NOW;
     auto total_start_time = TIME_NOW;
-    system("sudo ip link set ens1f0v1 down");
-    system("sudo ip link set ens1f0v0 down");
+    system("sudo ip link set enp4s0 down");
+    // system("sudo ip link set ens1f0v0 down");
     pthread_barrier_wait(&barrier_start);
     for(uint64_t i = 0; i < iter/2; i++){
         start_time = TIME_NOW;
@@ -222,7 +222,7 @@ int main(int argc, char* argv[]) {
 
     std::vector<PigeonDevice> skip_device_list;
     // std::vector<PigeonDevice> named_device_list = {{"mlx5_4", "10.10.1.14"}, {"mlx5_7", "10.10.1.17"}};
-    std::vector<PigeonDevice> named_device_list = {{"mlx5_4", "10.10.1.3"}, {"mlx5_5", "10.10.1.4"}};
+    std::vector<PigeonDevice> named_device_list = {{"mlx5_0", "10.10.1.3"}, {"mlx5_1", "10.10.1.4"}};
     // std::vector<PigeonDevice> named_device_list = {{"mlx5_5", "10.10.1.4"}};
     // std::vector<PigeonDevice> named_device_list = {{"mlx5_7", "10.10.1.13"}, {"mlx5_4", "10.10.1.10"}};
     // std::vector<PigeonDevice> named_device_list = {{"mlx5_2", "10.10.1.1"}};

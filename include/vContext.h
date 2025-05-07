@@ -38,7 +38,7 @@ public:
 
     ibv_mr* memory_register_temp(void* addr, size_t length) {
         pigeon_debug("temp device register memory\n");
-        return context_list_[primary_index_].PigeonMemReg(addr, length);
+        return back_context_send_[primary_index_]->PigeonMemReg(addr, length);
     }
 
     void memory_bind(void* addr, size_t length) {
