@@ -231,7 +231,7 @@ ErrorType vQP::write_main(void* local_addr, uint64_t length, void* remote_addr, 
             if(start_ != end_){
                 for(int i = start_; i < end_; i++){
                     if(work_queue_[i%wr_buffer_size].wr_timestamp_ == wc.wr_id){
-                        work_queue_[work_queue_finished_].wr_length_ = 0;
+                        work_queue_[i%wr_buffer_size].wr_length_ = 0;
                     }
                     if(work_queue_[i%wr_buffer_size].wr_length_ == 0 && i%wr_buffer_size == work_queue_start_){
                         work_queue_start_ = (work_queue_start_ + 1)%wr_buffer_size;
