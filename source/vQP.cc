@@ -90,7 +90,7 @@ ErrorType vQP::write(void* local_addr, uint64_t length, void* remote_addr, uint3
             // return write(local_addr, length, remote_addr, rkey, context_->lid_, context_->dct_num_);
         }
     } else{
-        printf("use backup\n");
+        // printf("use backup\n");
         return write_backup(local_addr, length, remote_addr, rkey, context_->lid_, context_->dct_num_);
     }
 }

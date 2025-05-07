@@ -95,7 +95,8 @@ public:
 
     void switch_pigeon() {
         context_list_[primary_index_].status_ = PIGEON_STATUS_ERROR;
-        context_list_[primary_index_].PigeonDisconnected();
+        // context_list_[primary_index_].PigeonDisconnected();
+        secondary_index_ = context_list_.size()-1;
         pigeon_swap(primary_index_, secondary_index_);
         if(!context_list_[primary_index_].connected()){
             create_connecter(ip_, port_);
@@ -136,12 +137,11 @@ public:
         command += " up";
         system(command.c_str());
         // usleep(1000);
-        if(!context_list_[recovery_primary].connected()) {
-            add_device(context_list_[recovery_primary].device_);
+        // if(!context_list_[recovery_primary].connected()) {
+        add_device(context_list_[recovery_primary].device_);
             // create_RPC(ip_, port_);
-            secondary_index_ = context_list_.size()-1;
-            context_list_[secondary_index_].PigeonMemoryRegister((void*)addr_remote, length_remote);
-        }
+        context_list_[context_list_.size()-1].PigeonMemoryRegister((void*)addr_remote, length_remote);
+        // }
     }
 
     void readd_device(int index);
