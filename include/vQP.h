@@ -11,10 +11,10 @@ public:
 
 struct WRBuffer {
     uint32_t wr_timestamp_;
+    uint32_t wr_rkey_;
     uint64_t wr_local_addr_;
     uint64_t wr_length_;
     uint64_t wr_remote_addr_;
-    uint32_t wr_rkey_;
     OpType wr_optype_;
 }; 
 

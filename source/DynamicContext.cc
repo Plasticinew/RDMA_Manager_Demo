@@ -346,10 +346,10 @@ ErrorType DynamicContext::DynamicRead(void* local_addr, uint64_t length, void* r
 ErrorType DynamicContext::DynamicWrite(void* local_addr, uint64_t length, void* remote_addr, uint32_t rkey, uint32_t lid, uint32_t dct_num){
     if(ah_ == NULL) {
         ibv_gid gid;
-        *(uint64_t*)gid.raw = (uint64_t)33022;
-        *((uint64_t*)(gid.raw)+1) = (uint64_t)4934949029753786626;
-        gid.global.interface_id = 4934949029753786626;
-        gid.global.subnet_prefix = 33022;
+        *(uint64_t*)gid.raw = target_gid1;
+        *((uint64_t*)(gid.raw)+1) = target_gid2;
+        gid.global.interface_id = target_interface;
+        gid.global.subnet_prefix = target_subnet;
         struct ibv_ah_attr ah_attr;
         ah_attr.dlid = lid;
         ah_attr.port_num = 1;

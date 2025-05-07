@@ -159,7 +159,7 @@ ErrorType vQP::read_main(void* local_addr, uint64_t length, void* remote_addr, u
 ErrorType vQP::write_main(void* local_addr, uint64_t length, void* remote_addr, uint32_t rkey) {
     struct ibv_send_wr log_wr = {};
     struct ibv_sge log_sge;
-    bool use_log = false;
+    bool use_log = true;
     if(use_log){
         time_stamp += 1;
         log_sge.addr = (uint64_t)(&time_stamp);
