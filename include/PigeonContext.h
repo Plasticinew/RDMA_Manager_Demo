@@ -89,6 +89,7 @@ struct WorkerInfo {
         pigeon_debug("device ip: %s\n", device_.ip.c_str());
     }
     PigeonStatus status_;
+    PigeonDevice device_;
 
     void PigeonDisconnected(){
         rdma_disconnect(cm_id_);
@@ -104,7 +105,6 @@ private:
     rdma_event_channel* channel_;
     rdma_cm_id* cm_id_;
     ibv_cq* cq_;
-    PigeonDevice device_;
     uint32_t worker_num_;
     WorkerInfo** worker_info_;
     std::thread **worker_threads_;

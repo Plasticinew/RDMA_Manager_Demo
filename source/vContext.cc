@@ -133,6 +133,61 @@ void vContext::add_device(PigeonDevice device) {
     
 }
 
+void vContext::readd_device(int index) {
+    int device_num;
+    struct ibv_context** device_list; 
+    PigeonDevice device = context_list_[index].device_;
+    // named_device_list_.push_back(device);
+    
+    // search all avaliable rdma device
+    device_list = rdma_get_devices(&device_num);
+    for(int i = 0; i < device_num; i ++) {
+        if(named_device_list_.size() == 0) {
+            pigeon_debug("not implement yet\n");
+        } else {
+            if(device_list[i]->device->name == device.name) {
+                struct ibv_device_attr device_attr;
+                struct ibv_device_attr_ex device_attr_ex;
+                struct ibv_query_device_ex_input input;
+                ibv_query_device(device_list[i], & device_attr);
+                if (!(device_attr.device_cap_flags & IBV_DEVICE_MEM_WINDOW)) {
+                    printf("do not support memory window\n");
+                } else {
+                    printf("support %d memory window and %d qp total\n", device_attr.max_mw, device_attr.max_qp);
+                }
+                ibv_query_device_ex(device_list[i], NULL, &device_attr_ex);
+                if(!(device_attr_ex.odp_caps.general_caps & IBV_ODP_SUPPORT)){
+                    printf("Not support odp!\n");
+                }
+                // 创建QP与DCQP
+                // 未来考虑通过共享减少DCQP的个数
+                PigeonContext context(device_list[i], device);
+                // DynamicContext r_context(device_list[i], device, context.get_pd());
+                // r_context.DynamicListen();
+                // back_context_recv_.push_back(r_context);
+                // DynamicContext s_context(device_list[i], device, context.get_pd());
+                // s_context.DynamicConnect();
+                // back_context_send_.push_back(s_context);
+                if(r_context.find(device.name) == r_context.end()){
+                    r_context[device.name] = new DynamicContext(device_list[i], device, context.get_pd());
+                    // r_context[device.name] = DynamicContext(device_list[i], device, context.get_pd());
+                    r_context[device.name]->DynamicListen();
+                }
+                back_context_recv_[index] = r_context[device.name];
+                if(s_context.find(device.name) == s_context.end()){
+                    s_context[device.name] = new DynamicContext(device_list[i], device, context.get_pd());
+                    // r_context[device.name] = DynamicContext(device_list[i], device, context.get_pd());
+                    s_context[device.name]->DynamicConnect();
+                }
+                back_context_send_[index] = s_context[device.name];
+                context.SetDynamicConnection(r_context[device.name]);
+                context_list_[index] = context;
+                break;
+            }
+        }
+    }
+    
+}
 
 void vContext::create_connecter(const std::string ip, const std::string port) {
     // create QP connection with certain ip...
