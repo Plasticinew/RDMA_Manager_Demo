@@ -8,6 +8,7 @@ extern std::map<std::string, DynamicContext*> s_context;
 
 // 管理一组网卡多个QP的上下文
 vContext::vContext(std::vector<PigeonDevice> *skip_device_list, std::vector<PigeonDevice> *named_device_list) {
+    rand_val = std::mt19937(r());
     int device_num;
     struct ibv_context** device_list; 
     

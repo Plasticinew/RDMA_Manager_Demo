@@ -72,6 +72,10 @@ struct WorkerInfo {
         return device_.name;
     }
 
+    std::string get_netname() {
+        return device_.netname;
+    }
+
     std::string get_ip() {
         return device_.ip;
     }

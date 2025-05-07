@@ -26,6 +26,7 @@
 struct PigeonDevice {
     std::string name;
     std::string ip;
+    std::string netname;
 };
 
 enum PigeonStatus {

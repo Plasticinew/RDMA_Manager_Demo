@@ -5,6 +5,8 @@
 #include "DynamicContext.h"
 #include <map>
 #include <string>
+#include <cstdlib>
+#include <random>
 
 namespace rdmanager{
 
@@ -104,6 +106,25 @@ public:
         return context_list_[primary_index_].server_cmd_rkey_;
     }
 
+    bool down_primary() {
+        if(rand_val()%100 == 1){
+            recovery_primary = primary_index_;
+            std::string command = "sudo ip link set ";
+            command += context_list_[primary_index_].get_netname();
+            command += " down";
+            system(command.c_str());
+            return true;
+        }
+        return false;
+    }
+
+    void up_primary() {
+        std::string command = "sudo ip link set ";
+        command += context_list_[recovery_primary].get_netname();
+        command += " up";
+        system(command.c_str());
+    }
+
 private:
     std::vector<PigeonDevice> skip_device_list_;
     std::vector<PigeonDevice> named_device_list_;
@@ -114,7 +135,9 @@ private:
     std::string ip_, port_;
     int primary_index_ = 0;
     int secondary_index_ = 1;
-
+    int recovery_primary = 0;
+    std::random_device r;
+    std::mt19937 rand_val;
 };
 
 

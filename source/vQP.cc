@@ -42,6 +42,7 @@ void vQP::recovery(void* local_addr, uint64_t length, uint32_t lid, uint32_t dct
             }
         }
     }
+    context_->up_primary();
 }
 
 ErrorType vQP::read(void* local_addr, uint64_t length, void* remote_addr, uint32_t rkey, uint32_t lid, uint32_t dct_num) {
@@ -195,11 +196,16 @@ ErrorType vQP::write_main(void* local_addr, uint64_t length, void* remote_addr, 
         send_wr.send_flags = IBV_SEND_SIGNALED;
     send_wr.wr.rdma.remote_addr = (uint64_t)remote_addr;
     send_wr.wr.rdma.rkey = rkey;
-
+    if(context_->down_primary()){
+        printf("down before write\n");
+    }
     ibv_qp* qp = context_->get_qp();
     if (ibv_post_send(qp, &send_wr, &bad_send_wr)) {
         perror("Error, ibv_post_send failed");
         return SEND_ERROR;
+    }
+    if(context_->down_primary()){
+        printf("down after write\n");
     }
     work_queue_[work_queue_finished_].wr_timestamp_ = time_stamp;
     work_queue_[work_queue_finished_].wr_local_addr_ = (uint64_t)local_addr;

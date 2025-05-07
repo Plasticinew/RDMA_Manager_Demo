@@ -3,7 +3,6 @@
 #include <atomic>   // 原子操作支持
 #include <unistd.h> // usleep
 #include <random>   // 随机数生成
-#include <cstdlib>
 
 // 用于测试片上竞争的bench client
 
@@ -191,7 +190,6 @@ void do_switch(rdmanager::vQP** vqp, void* addr, uint32_t lid, uint32_t dct_num,
     pthread_barrier_wait(&barrier_start);
     printf("%lu\n", TIME_DURATION_US(total_start_time, TIME_NOW)/(iter/2));
     // vqp[thread_id]->switch_card();
-    system("sudo ip link set enp4s0 down");
     total_start_time = TIME_NOW;
     for(uint64_t i = 0; i < iter/2; i++){
         start_time = TIME_NOW;
@@ -222,7 +220,7 @@ int main(int argc, char* argv[]) {
 
     std::vector<PigeonDevice> skip_device_list;
     // std::vector<PigeonDevice> named_device_list = {{"mlx5_4", "10.10.1.14"}, {"mlx5_7", "10.10.1.17"}};
-    std::vector<PigeonDevice> named_device_list = {{"mlx5_0", "10.10.1.3"}, {"mlx5_1", "10.10.1.4"}};
+    std::vector<PigeonDevice> named_device_list = {{"mlx5_0", "10.10.1.3", "enp4s0"}, {"mlx5_1", "10.10.1.4", "enp5s0"}};
     // std::vector<PigeonDevice> named_device_list = {{"mlx5_5", "10.10.1.4"}};
     // std::vector<PigeonDevice> named_device_list = {{"mlx5_7", "10.10.1.13"}, {"mlx5_4", "10.10.1.10"}};
     // std::vector<PigeonDevice> named_device_list = {{"mlx5_2", "10.10.1.1"}};
