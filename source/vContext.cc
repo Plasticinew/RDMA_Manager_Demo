@@ -56,7 +56,7 @@ vContext::vContext(std::vector<PigeonDevice> *skip_device_list, std::vector<Pige
                     if(r_context.find((*iter).name) == r_context.end()){
                         r_context.insert(std::pair((*iter).name, DynamicContext(device_list[i], (*iter), context.get_pd())));
                         // r_context[(*iter).name] = DynamicContext(device_list[i], (*iter), context.get_pd());
-                        r_context.find((*iter).name)->second.DynamicConnect();
+                        r_context.find((*iter).name)->second.DynamicListen();
                     }
                     back_context_recv_.push_back(&r_context.find((*iter).name)->second);
                     if(s_context.find((*iter).name) == s_context.end()){
@@ -64,7 +64,7 @@ vContext::vContext(std::vector<PigeonDevice> *skip_device_list, std::vector<Pige
                         // r_context[(*iter).name] = DynamicContext(device_list[i], (*iter), context.get_pd());
                         s_context.find((*iter).name)->second.DynamicConnect();
                     }
-                    back_context_recv_.push_back(&s_context.find((*iter).name)->second);
+                    back_context_send_.push_back(&s_context.find((*iter).name)->second);
                     context.SetDynamicConnection(&r_context.find((*iter).name)->second);
                     // DynamicContext s_context(device_list[i], (*iter), context.get_pd());
                     // s_context.DynamicConnect();
@@ -115,7 +115,7 @@ void vContext::add_device(PigeonDevice device) {
                 if(r_context.find(device.name) == r_context.end()){
                     r_context.insert(std::pair(device.name, DynamicContext(device_list[i], device, context.get_pd())));
                     // r_context[(*iter).name] = DynamicContext(device_list[i], (*iter), context.get_pd());
-                    r_context.find(device.name)->second.DynamicConnect();
+                    r_context.find(device.name)->second.DynamicListen();
                 }
                 back_context_recv_.push_back(&r_context.find(device.name)->second);
                 if(s_context.find(device.name) == s_context.end()){
@@ -123,7 +123,7 @@ void vContext::add_device(PigeonDevice device) {
                     // r_context[(*iter).name] = DynamicContext(device_list[i], (*iter), context.get_pd());
                     s_context.find(device.name)->second.DynamicConnect();
                 }
-                back_context_recv_.push_back(&s_context.find(device.name)->second);
+                back_context_send_.push_back(&s_context.find(device.name)->second);
                 context.SetDynamicConnection(&r_context.find(device.name)->second);
                 break;
             }

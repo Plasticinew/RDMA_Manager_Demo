@@ -23,10 +23,12 @@ struct WorkerInfo {
     uint64_t gid1, gid2, interface, subnet;
     uint16_t lid_;
     uint32_t dct_num_;
+    DynamicContext* dynamic_context;
     
     PigeonContext(ibv_context* context, PigeonDevice device);
 
     void SetDynamicConnection(DynamicContext* dynamic) {
+        printf("set dynamic %lu\n", dynamic->gid1);
         dynamic_context = dynamic;
     }
 
@@ -105,7 +107,6 @@ private:
     struct ibv_mr *reg_buf_mr_;
     CmdMsgBlock* qp_log_[1024];
     struct ibv_mr* qp_log_list_[1024];
-    DynamicContext* dynamic_context;
 };
 
 }
