@@ -48,7 +48,6 @@ vContext::vContext(std::vector<PigeonDevice> *skip_device_list, std::vector<Pige
                         printf("Not support odp!\n");
                     }
                     PigeonContext context(device_list[i], *iter);
-                    context_list_.push_back(context);
                     if(RPC_context_ == NULL) {
                         PigeonContext* rpc_context = new PigeonContext(device_list[i], *iter);
                         RPC_context_ = rpc_context;
@@ -66,6 +65,7 @@ vContext::vContext(std::vector<PigeonDevice> *skip_device_list, std::vector<Pige
                     }
                     back_context_send_.push_back(&s_context.find((*iter).name)->second);
                     context.SetDynamicConnection(&r_context.find((*iter).name)->second);
+                    context_list_.push_back(context);
                     // DynamicContext s_context(device_list[i], (*iter), context.get_pd());
                     // s_context.DynamicConnect();
                     // back_context_send_.push_back(s_context);
@@ -105,7 +105,6 @@ void vContext::add_device(PigeonDevice device) {
                 // 创建QP与DCQP
                 // 未来考虑通过共享减少DCQP的个数
                 PigeonContext context(device_list[i], device);
-                context_list_.push_back(context);
                 // DynamicContext r_context(device_list[i], device, context.get_pd());
                 // r_context.DynamicListen();
                 // back_context_recv_.push_back(r_context);
@@ -125,6 +124,7 @@ void vContext::add_device(PigeonDevice device) {
                 }
                 back_context_send_.push_back(&s_context.find(device.name)->second);
                 context.SetDynamicConnection(&r_context.find(device.name)->second);
+                context_list_.push_back(context);
                 break;
             }
         }

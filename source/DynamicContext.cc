@@ -386,7 +386,7 @@ ErrorType DynamicContext::DynamicWrite(void* local_addr, uint64_t length, void* 
 
 void DynamicContext::PigeonMemoryRegister(void* addr, size_t length) {
     ibv_mr* mr = ibv_reg_mr(pd_, addr, length, IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_READ | IBV_ACCESS_REMOTE_WRITE  | IBV_ACCESS_REMOTE_ATOMIC | IBV_ACCESS_MW_BIND);
-    pigeon_debug("device %s register memory %p, length %lu, rkey %u\n", device_.name.c_str(), addr, length, mr->rkey);
+    // pigeon_debug("device %s register memory %p, length %lu, rkey %u\n", device_.name.c_str(), addr, length, mr->rkey);
     mr_ = mr;
     assert(mr != NULL);
     return;
