@@ -131,8 +131,8 @@ public:
         command += context_list_[recovery_primary].get_netname();
         command += " up";
         system(command.c_str());
-        if(context_list_[primary_index_].connected() == PIGEON_STATUS_ERROR)
-            readd_device(primary_index_);
+        if(context_list_[recovery_primary].connected() == PIGEON_STATUS_ERROR)
+            readd_device(recovery_primary);
     }
 
     void readd_device(int index);
