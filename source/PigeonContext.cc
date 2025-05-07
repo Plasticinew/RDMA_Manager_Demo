@@ -141,7 +141,7 @@ void PigeonContext::PigeonConnect(const std::string ip, const std::string port, 
 
     // Connect finished
     cq_ = cq;
-    status_ = PigeonStatus::PIGEON_STATUS_CONNECTED;
+
     return;
 }
 

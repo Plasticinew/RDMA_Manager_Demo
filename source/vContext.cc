@@ -204,6 +204,7 @@ void vContext::create_connecter(const std::string ip, const std::string port) {
         (*i)->CreateAh(gid1, gid2, interface, subnet, lid_); 
     log_addr_persist = get_log_addr();
     log_rkey_persist = get_log_rkey();
+    context_list_[primary_index_].status_ = PigeonStatus::PIGEON_STATUS_CONNECTED;
 
     // for (auto iter = context_list_.begin(); iter != context_list_.end(); iter ++) {
     //     (*iter).PigeonConnect(ip, port);
