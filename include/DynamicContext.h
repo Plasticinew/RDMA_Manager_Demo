@@ -3,7 +3,7 @@
 
 #include "PigeonCommon.h"
 #include <infiniband/mlx5dv.h>
-#include "hiredis/hiredis.h"
+// #include "hiredis/hiredis.h"
 // #include <infiniband/verbs_exp.h>
 
 namespace rdmanager{
