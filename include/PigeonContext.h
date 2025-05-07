@@ -88,6 +88,7 @@ struct WorkerInfo {
         pigeon_debug("device name: %s\n", device_.name.c_str());
         pigeon_debug("device ip: %s\n", device_.ip.c_str());
     }
+    PigeonStatus status_;
 
 private:
     ibv_context* context_;
@@ -97,7 +98,6 @@ private:
     rdma_event_channel* channel_;
     rdma_cm_id* cm_id_;
     ibv_cq* cq_;
-    PigeonStatus status_;
     PigeonDevice device_;
     uint32_t worker_num_;
     WorkerInfo** worker_info_;

@@ -53,12 +53,12 @@ ErrorType vQP::read(void* local_addr, uint64_t length, void* remote_addr, uint32
     if(context_->connected()){
         ErrorType err = read_main(local_addr, length, remote_addr, rkey);
         if(err == SEND_ERROR){
-            context_->switch_pigeon();
+            switch_card();
             printf("change nic\n");
             // return read(local_addr, length, remote_addr, rkey, lid, dct_num);
             return read(local_addr, length, remote_addr, rkey, context_->lid_, context_->dct_num_);
         } else if(err == RECIEVE_ERROR){
-            context_->switch_pigeon();
+            switch_card();
             recovery(local_addr, length, lid, dct_num);
             return read(local_addr, length, remote_addr, rkey, context_->lid_, context_->dct_num_);
         }
@@ -74,11 +74,11 @@ ErrorType vQP::write(void* local_addr, uint64_t length, void* remote_addr, uint3
     if(context_->connected()){
         ErrorType err = write_main(local_addr, length, remote_addr, rkey);
         if(err == SEND_ERROR){
-            context_->switch_pigeon();
+            switch_card();
             printf("change nic\n");
             return write(local_addr, length, remote_addr, rkey, context_->lid_, context_->dct_num_);
         } else if(err == RECIEVE_ERROR){
-            context_->switch_pigeon();
+            switch_card();
             printf("change nic\n");
             recovery(local_addr, length, lid, dct_num);
             return write(local_addr, length, remote_addr, rkey, context_->lid_, context_->dct_num_);
