@@ -52,25 +52,35 @@ ErrorType vQP::read(void* local_addr, uint64_t length, void* remote_addr, uint32
         if(err == SEND_ERROR){
             context_->switch_pigeon();
             printf("change nic\n");
-            return read(local_addr, length, remote_addr, rkey, lid, dct_num);
+            // return read(local_addr, length, remote_addr, rkey, lid, dct_num);
+            return read(local_addr, length, remote_addr, rkey, context_->lid_, context_->dct_num_);
         } else if(err == RECIEVE_ERROR){
             context_->switch_pigeon();
             recovery(local_addr, length, lid, dct_num);
-            return read(local_addr, length, remote_addr, rkey, lid, dct_num);
+            return read(local_addr, length, remote_addr, rkey, context_->lid_, context_->dct_num_);
         }
     }
     else{
         // 不可用时，使用DCQP
         // printf("using temple connect\n");
-        return read_backup(local_addr, length, remote_addr, rkey, lid, dct_num);
+        return read_backup(local_addr, length, remote_addr, rkey, context_->lid_, context_->dct_num_);
     }
 }
 
 ErrorType vQP::write(void* local_addr, uint64_t length, void* remote_addr, uint32_t rkey, uint32_t lid, uint32_t dct_num) {
-    if(context_->connected()) {
-        return write_main(local_addr, length, remote_addr, rkey);
+    if(context_->connected()){
+        ErrorType err = write_main(local_addr, length, remote_addr, rkey);
+        if(err == SEND_ERROR){
+            context_->switch_pigeon();
+            printf("change nic\n");
+            return write(local_addr, length, remote_addr, rkey, context_->lid_, context_->dct_num_);
+        } else if(err == RECIEVE_ERROR){
+            context_->switch_pigeon();
+            recovery(local_addr, length, lid, dct_num);
+            return write(local_addr, length, remote_addr, rkey, context_->lid_, context_->dct_num_);
+        }
     } else
-        return write_backup(local_addr, length, remote_addr, rkey, lid, dct_num);
+        return write_backup(local_addr, length, remote_addr, rkey, context_->lid_, context_->dct_num_);
 }
 
 ErrorType vQP::read_main(void* local_addr, uint64_t length, void* remote_addr, uint32_t rkey) {
