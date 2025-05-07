@@ -3,6 +3,7 @@
 #include <atomic>   // 原子操作支持
 #include <unistd.h> // usleep
 #include <random>   // 随机数生成
+#include <cstdlib>
 
 // 用于测试片上竞争的bench client
 
@@ -180,19 +181,21 @@ void do_switch(rdmanager::vQP** vqp, void* addr, uint32_t lid, uint32_t dct_num,
         vqp[0]->alloc_RPC(&remote_addr[0], &rkey[0], page_size*1024*1024*16);
     auto start_time = TIME_NOW;
     auto total_start_time = TIME_NOW;
+    system("sudo ip link set ens1f0v1 down");
+    system("sudo ip link set ens1f0v0 down");
     pthread_barrier_wait(&barrier_start);
     for(uint64_t i = 0; i < iter/2; i++){
         start_time = TIME_NOW;
-        vqp[thread_id]->read(addr, page_size, (void*)remote_addr[0], rkey[0], lid, dct_num);
+        vqp[thread_id]->write(addr, 64, (void*)remote_addr[0], rkey[0], lid, dct_num);
         // printf("%lu\n", TIME_DURATION_US(start_time, TIME_NOW));
     }
     pthread_barrier_wait(&barrier_start);
     printf("%lu\n", TIME_DURATION_US(total_start_time, TIME_NOW)/(iter/2));
-    vqp[thread_id]->switch_card();
+    // vqp[thread_id]->switch_card();
     total_start_time = TIME_NOW;
     for(uint64_t i = 0; i < iter/2; i++){
         start_time = TIME_NOW;
-        vqp[thread_id]->read(addr, page_size, (void*)remote_addr[0], rkey[0], lid, dct_num);
+        vqp[thread_id]->write(addr, 64, (void*)remote_addr[0], rkey[0], lid, dct_num);
         // vqp->read(addr, page_size, (void*)0x1000000, rkey, lid, dct_num);
         // printf("%lu\n", TIME_DURATION_US(start_time, TIME_NOW));
     }

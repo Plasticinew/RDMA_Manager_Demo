@@ -76,11 +76,14 @@ ErrorType vQP::write(void* local_addr, uint64_t length, void* remote_addr, uint3
             return write(local_addr, length, remote_addr, rkey, context_->lid_, context_->dct_num_);
         } else if(err == RECIEVE_ERROR){
             context_->switch_pigeon();
+            printf("change nic\n");
             recovery(local_addr, length, lid, dct_num);
             return write(local_addr, length, remote_addr, rkey, context_->lid_, context_->dct_num_);
         }
-    } else
+    } else{
+        printf("use backup\n");
         return write_backup(local_addr, length, remote_addr, rkey, context_->lid_, context_->dct_num_);
+    }
 }
 
 ErrorType vQP::read_main(void* local_addr, uint64_t length, void* remote_addr, uint32_t rkey) {
@@ -242,9 +245,9 @@ ErrorType vQP::write_main(void* local_addr, uint64_t length, void* remote_addr, 
 }
 
 ErrorType vQP::read_backup(void* local_addr, uint64_t length, void* remote_addr, uint32_t rkey, uint32_t lid, uint32_t dct_num) {
-    printf("%u %lu %lu %lu %lu %u %u\n", rkey, context_->gid1, context_->gid2, 
-        context_->interface, context_->subnet,
-        context_->lid_, context_->dct_num_);
+    // printf("%u %lu %lu %lu %lu %u %u\n", rkey, context_->gid1, context_->gid2, 
+    //     context_->interface, context_->subnet,
+    //     context_->lid_, context_->dct_num_);
     return context_->get_primary_dynamic()->DynamicRead(local_addr, length, remote_addr, rkey, context_->lid_, context_->dct_num_);
 }
 
