@@ -90,6 +90,12 @@ struct WorkerInfo {
     }
     PigeonStatus status_;
 
+    void PigeonDisconnected(){
+        rdma_disconnect(cm_id_);
+        rdma_destroy_event_channel(channel_);
+        rdma_destroy_id(cm_id_);
+    }
+
 private:
     ibv_context* context_;
     ibv_pd* pd_;

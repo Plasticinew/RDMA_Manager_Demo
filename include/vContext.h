@@ -92,6 +92,7 @@ public:
 
     void switch_pigeon() {
         context_list_[primary_index_].status_ = PIGEON_STATUS_ERROR;
+        context_list_[primary_index_].PigeonDisconnected();
         pigeon_swap(primary_index_, secondary_index_);
         if(!context_list_[primary_index_].connected())
             create_connecter(ip_, port_);
