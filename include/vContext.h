@@ -19,7 +19,8 @@ public:
     uint64_t gid1, gid2, interface, subnet;
     uint16_t lid_;
     uint32_t dct_num_;
-    
+    bool enable_failure = false;
+
     vContext(std::vector<PigeonDevice> *skip_device_list, std::vector<PigeonDevice> *named_device_list) ;
 
     void add_device(PigeonDevice device);
@@ -110,7 +111,7 @@ public:
     uint32_t log_rkey_persist;
 
     bool down_primary() {
-        if(rand_val()%100 == 1){
+        if(enable_failure && rand_val()%10000 == 1){
             // downed = true;
             recovery_primary = primary_index_;
             std::string command = "sudo ip link set ";

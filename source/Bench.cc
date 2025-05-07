@@ -14,7 +14,7 @@ const uint64_t iter = 1000000;
 // 线程数
 uint64_t thread_num = 4;
 
-std::atomic<long> counter = thread_num; 
+std::atomic<long> counter = 0; 
 
 // 远程MR起始地址信息
 uint64_t remote_addr[4096]; uint32_t rkey[4096];
@@ -185,6 +185,7 @@ void do_switch(rdmanager::vQP** vqp, void* addr, uint32_t lid, uint32_t dct_num,
     for(uint64_t i = 0; i < iter/2; i++){
         start_time = TIME_NOW;
         vqp[thread_id]->write(addr, 64, (void*)remote_addr[0], rkey[0], lid, dct_num);
+        counter.fetch_add(1);
         // printf("%lu\n", TIME_DURATION_US(start_time, TIME_NOW));
     }
     pthread_barrier_wait(&barrier_start);
@@ -194,6 +195,7 @@ void do_switch(rdmanager::vQP** vqp, void* addr, uint32_t lid, uint32_t dct_num,
     for(uint64_t i = 0; i < iter/2; i++){
         start_time = TIME_NOW;
         vqp[thread_id]->write(addr, 64, (void*)remote_addr[0], rkey[0], lid, dct_num);
+        counter.fetch_add(1);
         // vqp->read(addr, page_size, (void*)0x1000000, rkey, lid, dct_num);
         // printf("%lu\n", TIME_DURATION_US(start_time, TIME_NOW));
     }
@@ -237,6 +239,9 @@ int main(int argc, char* argv[]) {
         vcontext->memory_register(addr, page_size);
         vcontext->create_RPC("10.10.1.2", "1145");
         vcontext->create_connecter("10.10.1.2", "1145");
+        if(i == 0){
+            vcontext->enable_failure = true;
+        }
         rdmanager::vQP* vqp = new rdmanager::vQP(vcontext);
         vqp_list[i] = vqp;
         printf("%u %lu %lu %lu %lu %u %u\n", &rkey, vcontext->gid1, vcontext->gid2, 
@@ -287,13 +292,13 @@ int main(int argc, char* argv[]) {
         for(int i = 0; i < thread_num; i++){
             read_thread[i]->join();
         }
-        // long old_val, new_val;
-        // while(counter.load() < thread_num * iter -1){
-        //     old_val = counter.load();
-        //     usleep(1000);
-        //     new_val = counter.load();
-        //     printf("%lf\n", 1.0*(new_val-old_val)*1000*page_size);
-        // }
+        long old_val, new_val;
+        while(counter.load() < thread_num * iter -1){
+            old_val = counter.load();
+            usleep(1000);
+            new_val = counter.load();
+            printf("%lf\n", 1.0*(new_val-old_val)*1000*page_size);
+        }
     } else if(bench_type == "cache") {
         for(int i = 0; i < thread_num; i++){
             read_thread[i] = new std::thread(&do_mem_cache_test, vqp_cache, addr, i);
