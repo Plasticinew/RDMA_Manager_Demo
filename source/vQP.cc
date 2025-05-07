@@ -57,11 +57,13 @@ ErrorType vQP::read(void* local_addr, uint64_t length, void* remote_addr, uint32
             switch_card();
             printf("change nic\n");
             // return read(local_addr, length, remote_addr, rkey, lid, dct_num);
-            return read(local_addr, length, remote_addr, rkey, context_->lid_, context_->dct_num_);
+            return NO_ERROR;
+            // return read(local_addr, length, remote_addr, rkey, context_->lid_, context_->dct_num_);
         } else if(err == RECIEVE_ERROR){
             switch_card();
             recovery(local_addr, length, lid, dct_num);
-            return read(local_addr, length, remote_addr, rkey, context_->lid_, context_->dct_num_);
+            return NO_ERROR;
+            // return read(local_addr, length, remote_addr, rkey, context_->lid_, context_->dct_num_);
         }
     }
     else{
@@ -77,12 +79,13 @@ ErrorType vQP::write(void* local_addr, uint64_t length, void* remote_addr, uint3
         if(err == SEND_ERROR){
             switch_card();
             printf("change nic\n");
-            return write(local_addr, length, remote_addr, rkey, context_->lid_, context_->dct_num_);
+            return NO_ERROR;
         } else if(err == RECIEVE_ERROR){
             switch_card();
             printf("change nic\n");
             recovery(local_addr, length, lid, dct_num);
-            return write(local_addr, length, remote_addr, rkey, context_->lid_, context_->dct_num_);
+            return NO_ERROR;
+            // return write(local_addr, length, remote_addr, rkey, context_->lid_, context_->dct_num_);
         }
     } else{
         printf("use backup\n");
