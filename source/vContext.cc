@@ -226,6 +226,7 @@ void vContext::create_RPC(const std::string ip, const std::string port) {
     ip_ = ip;
     port_ = port;
     RPC_context_->PigeonConnect(ip, port, CONN_RPC, 0);
+    RPC_context_->status_ = PigeonStatus::PIGEON_STATUS_CONNECTED;
     return;
 }
 
