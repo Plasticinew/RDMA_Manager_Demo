@@ -1,13 +1,9 @@
 
 #include "PigeonCommon.h"
 #include "PigeonContext.h"
-#include "DynamicContext.h"
 #include "Msg.h"
 
 namespace rdmanager{
-
-extern std::map<std::string, DynamicContext> r_context;
-extern std::map<std::string, DynamicContext> s_context;
 
 PigeonContext::PigeonContext(ibv_context* context, PigeonDevice device) {
     context_ = context;
