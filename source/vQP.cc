@@ -44,6 +44,7 @@ void vQP::recovery(void* local_addr, uint64_t length, uint32_t lid, uint32_t dct
         }
     }
     context_->up_primary();
+    downed = false;
 }
 
 ErrorType vQP::read(void* local_addr, uint64_t length, void* remote_addr, uint32_t rkey, uint32_t lid, uint32_t dct_num) {
@@ -198,7 +199,7 @@ ErrorType vQP::write_main(void* local_addr, uint64_t length, void* remote_addr, 
     send_wr.wr.rdma.remote_addr = (uint64_t)remote_addr;
     send_wr.wr.rdma.rkey = rkey;
     if(context_->down_primary()){
-        // downed = true;
+        downed = true;
         printf("down before write\n");
     }
     ibv_qp* qp = context_->get_qp();
@@ -206,8 +207,8 @@ ErrorType vQP::write_main(void* local_addr, uint64_t length, void* remote_addr, 
         perror("Error, ibv_post_send failed");
         return SEND_ERROR;
     }
-    if(context_->down_primary()){
-        // downed = true;
+    if(!downed && context_->down_primary()){
+        downed = true;
         printf("down after write\n");
     }
     work_queue_[work_queue_finished_].wr_timestamp_ = time_stamp;
