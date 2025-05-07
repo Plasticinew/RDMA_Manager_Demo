@@ -54,6 +54,7 @@ private:
     int work_queue_finished_ = 0;
     CmdMsgBlock *read_log;
     struct ibv_mr *read_log_mr;
+    bool downed = false;
 };
 
 

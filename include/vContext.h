@@ -107,8 +107,8 @@ public:
     }
 
     bool down_primary() {
-        if(rand_val()%100 == 1 && !downed){
-            downed = true;
+        if(rand_val()%100 == 1){
+            // downed = true;
             recovery_primary = primary_index_;
             std::string command = "sudo ip link set ";
             command += context_list_[primary_index_].get_netname();
@@ -139,7 +139,6 @@ private:
     int recovery_primary = 0;
     std::random_device r;
     std::mt19937 rand_val;
-    bool downed = false;
 };
 
 
