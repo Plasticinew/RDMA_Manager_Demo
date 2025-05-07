@@ -139,7 +139,7 @@ ErrorType vQP::read_main(void* local_addr, uint64_t length, void* remote_addr, u
             int end_ = work_queue_finished_;
             if(start_ > end_)
                 end_ += wr_buffer_size;
-            if(start_ == end_){
+            if(start_ != end_){
                 for(int i = start_; i < end_; i++){
                     if(work_queue_[i%wr_buffer_size].wr_timestamp_ == wc.wr_id){
                         work_queue_[work_queue_finished_].wr_length_ = 0;
@@ -165,7 +165,7 @@ ErrorType vQP::write_main(void* local_addr, uint64_t length, void* remote_addr, 
         log_sge.addr = (uint64_t)(&time_stamp);
         log_sge.length = sizeof(uint32_t);
         log_sge.lkey = 0;
-        log_wr.wr_id = 1;
+        log_wr.wr_id = time_stamp;
         log_wr.sg_list = &log_sge;
         log_wr.num_sge = 1;
         log_wr.next = NULL;
@@ -181,7 +181,7 @@ ErrorType vQP::write_main(void* local_addr, uint64_t length, void* remote_addr, 
 
     struct ibv_send_wr send_wr = {};
     struct ibv_send_wr *bad_send_wr;
-    send_wr.wr_id = 0;
+    send_wr.wr_id = time_stamp;
     send_wr.sg_list = &sge;
     send_wr.num_sge = 1;
     if(use_log)
