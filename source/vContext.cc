@@ -138,7 +138,7 @@ void vContext::create_connecter(const std::string ip, const std::string port) {
     // create QP connection with certain ip...
     ip_ = ip;
     port_ = port;
-    context_list_[primary_index_].PigeonConnect(ip, port, 0, CONN_ONESIDE);
+    context_list_[primary_index_].PigeonConnect(ip, port, CONN_ONESIDE, 0);
     gid1 = context_list_[primary_index_].gid1;
     gid2 = context_list_[primary_index_].gid2;
     interface = context_list_[primary_index_].interface;
@@ -169,7 +169,7 @@ void vContext::create_listener(const std::string port) {
 void vContext::create_RPC(const std::string ip, const std::string port) {
     ip_ = ip;
     port_ = port;
-    RPC_context_->PigeonConnect(ip, port, 0, CONN_RPC);
+    RPC_context_->PigeonConnect(ip, port, CONN_RPC, 0);
     return;
 }
 
