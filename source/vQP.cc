@@ -3,6 +3,8 @@
 
 namespace rdmanager {
 
+auto last_time = TIME_NOW;
+
 void vQP::recovery(void* local_addr, uint64_t length, uint32_t lid, uint32_t dct_num){
     ErrorType err;
     int start_ = work_queue_start_;
@@ -201,7 +203,8 @@ ErrorType vQP::write_main(void* local_addr, uint64_t length, void* remote_addr, 
         send_wr.send_flags = IBV_SEND_SIGNALED;
     send_wr.wr.rdma.remote_addr = (uint64_t)remote_addr;
     send_wr.wr.rdma.rkey = rkey;
-    if(context_->down_primary()){
+    if(context_->down_primary() && TIME_DURATION_US(last_time, TIME_NOW) > 100000){
+        last_time = TIME_NOW;
         downed = true;
         printf("down before write\n");
     }
@@ -210,7 +213,8 @@ ErrorType vQP::write_main(void* local_addr, uint64_t length, void* remote_addr, 
         perror("Error, ibv_post_send failed");
         return SEND_ERROR;
     }
-    if(!downed && context_->down_primary()){
+    if(!downed && context_->down_primary() && TIME_DURATION_US(last_time, TIME_NOW) > 100000){
+        last_time = TIME_NOW;
         downed = true;
         printf("down after write\n");
     }
