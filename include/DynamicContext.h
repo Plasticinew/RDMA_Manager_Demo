@@ -21,7 +21,7 @@ public:
     void PigeonBind(void* addr, uint64_t length, uint32_t &result_rkey);
     void PigeonUnbind(void* addr);
 
-    void CreateAh(uint64_t gid1, uint64_t gid2, uint64_t interface, uint64_t subnet, uint32_t lid);
+    void CreateAh(uint64_t input_gid1, uint64_t input_gid2, uint64_t input_interface, uint64_t input_subnet, uint32_t input_lid);
 
     ibv_qp* get_qp() {
         return qp_;
@@ -55,6 +55,11 @@ public:
     uint8_t port_num_;
     uint16_t lid_;
     uint32_t dct_num_;
+
+    uint64_t target_gid1, target_gid2, target_interface, target_subnet;
+    uint8_t target_port_num_;
+    uint16_t target_lid_;
+    uint32_t target_dct_num_;
 
 private:
     ibv_context* context_;

@@ -29,6 +29,9 @@ public:
     void memory_register(void* addr, size_t length) {
         for(int i = 0; i < context_list_.size(); i++) {
             context_list_[i].PigeonMemoryRegister(addr, length);
+            // back_context_send_[i]->PigeonMemoryRegister(addr, length);
+        }
+        for(int i = 0; i < back_context_send_.size(); i++) {
             back_context_send_[i]->PigeonMemoryRegister(addr, length);
         }
     }

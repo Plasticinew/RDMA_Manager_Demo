@@ -242,11 +242,14 @@ ErrorType vQP::write_main(void* local_addr, uint64_t length, void* remote_addr, 
 }
 
 ErrorType vQP::read_backup(void* local_addr, uint64_t length, void* remote_addr, uint32_t rkey, uint32_t lid, uint32_t dct_num) {
-    return context_->get_primary_dynamic()->DynamicRead(local_addr, length, remote_addr, rkey, lid, dct_num);
+    printf("%u %lu %lu %lu %lu %u %u\n", rkey, context_->gid1, context_->gid2, 
+        context_->interface, context_->subnet,
+        context_->lid_, context_->dct_num_);
+    return context_->get_primary_dynamic()->DynamicRead(local_addr, length, remote_addr, rkey, context_->lid_, context_->dct_num_);
 }
 
 ErrorType vQP::write_backup(void* local_addr, uint64_t length, void* remote_addr, uint32_t rkey, uint32_t lid, uint32_t dct_num) {
-    return context_->get_primary_dynamic()->DynamicWrite(local_addr, length, remote_addr, rkey, lid, dct_num);
+    return context_->get_primary_dynamic()->DynamicWrite(local_addr, length, remote_addr, rkey, context_->lid_, context_->dct_num_);
 }
 
 int vQP::alloc_RPC(uint64_t* addr, uint32_t* rkey, uint64_t size) {
