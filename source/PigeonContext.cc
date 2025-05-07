@@ -284,7 +284,6 @@ void PigeonContext::PigeonMemoryRegister(void* addr, size_t length) {
 
 ibv_mr* PigeonContext::PigeonMemReg(void* addr, size_t length) {
     ibv_mr* mr = ibv_reg_mr(pd_, addr, length, IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_READ | IBV_ACCESS_REMOTE_WRITE  | IBV_ACCESS_REMOTE_ATOMIC | IBV_ACCESS_MW_BIND);
-    pigeon_debug("device %s register memory %p, length %lu, rkey %u\n", device_.name.c_str(), addr, length, mr->rkey);
     return mr;
 }
 

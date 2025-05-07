@@ -256,28 +256,31 @@ void DynamicContext::DynamicListen() {
 }
 
 void DynamicContext::CreateAh(uint64_t gid1, uint64_t gid2, uint64_t interface, uint64_t subnet, uint32_t lid){
-    ibv_gid gid;
-    // 这里采用了明文存储
-    // 在新环境下测试时需要根据目标server打印的gid进行更新
-    // 未来会替换为从metadata server中获取
-    *(uint64_t*)gid.raw = gid1;
-    *((uint64_t*)(gid.raw)+1) = gid2;
-    gid.global.interface_id = interface;
-    gid.global.subnet_prefix = subnet;
-    struct ibv_ah_attr ah_attr;
-    ah_attr.dlid = lid;
-    ah_attr.port_num = 1;
-    ah_attr.is_global = 1;
-    ah_attr.grh.hop_limit = 1;
-    ah_attr.grh.sgid_index = 1;
-    ah_attr.grh.dgid = gid;
-    // ah_attr.sl = 1;
-    // ah_attr.src_path_bits = 0;
-    
-    ah_ = ibv_create_ah(pd_, &ah_attr);
-    if (!ah_) {
-        perror("create ah failed!");
-        return ;
+    if(ah_ == NULL){
+        ibv_gid gid;
+        // 这里采用了明文存储
+        // 在新环境下测试时需要根据目标server打印的gid进行更新
+        // 未来会替换为从metadata server中获取
+        *(uint64_t*)gid.raw = gid1;
+        *((uint64_t*)(gid.raw)+1) = gid2;
+        gid.global.interface_id = interface;
+        gid.global.subnet_prefix = subnet;
+        struct ibv_ah_attr ah_attr;
+        ah_attr.dlid = lid;
+        ah_attr.port_num = 1;
+        ah_attr.is_global = 1;
+        ah_attr.grh.hop_limit = 1;
+        ah_attr.grh.sgid_index = 1;
+        ah_attr.grh.dgid = gid;
+        // ah_attr.sl = 1;
+        // ah_attr.src_path_bits = 0;
+        
+        ah_ = ibv_create_ah(pd_, &ah_attr);
+        if (!ah_) {
+            perror("create ah failed!");
+            return ;
+        }
+        printf("create ah success\n");
     }
 }
 

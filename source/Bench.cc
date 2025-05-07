@@ -175,24 +175,25 @@ void do_read(rdmanager::vQP* vqp, void* addr, uint32_t rkey, uint32_t lid, uint3
     return;
 }
 
-void do_switch(rdmanager::vQP* vqp, void* addr, uint32_t rkey, uint32_t lid, uint32_t dct_num) {
+void do_switch(rdmanager::vQP** vqp, void* addr, uint32_t lid, uint32_t dct_num, int thread_id) {
+    if(thread_id == 0)
+        vqp[0]->alloc_RPC(&remote_addr[0], &rkey[0], page_size*1024*1024*16);
     auto start_time = TIME_NOW;
     auto total_start_time = TIME_NOW;
-    counter.fetch_sub(1);
-    while(counter.load()!=0);
+    pthread_barrier_wait(&barrier_start);
     for(uint64_t i = 0; i < iter/2; i++){
         start_time = TIME_NOW;
-        vqp->read(addr, page_size, (void*)0x1000000, rkey, lid, dct_num);
-        counter.fetch_add(1);
+        vqp[thread_id]->read(addr, page_size, (void*)remote_addr[0], rkey[0], lid, dct_num);
         // printf("%lu\n", TIME_DURATION_US(start_time, TIME_NOW));
     }
-    // printf("%lu\n", TIME_DURATION_US(total_start_time, TIME_NOW)/(iter/2));
-    vqp->switch_card();
+    pthread_barrier_wait(&barrier_start);
+    printf("%lu\n", TIME_DURATION_US(total_start_time, TIME_NOW)/(iter/2));
+    vqp[thread_id]->switch_card();
     total_start_time = TIME_NOW;
     for(uint64_t i = 0; i < iter/2; i++){
         start_time = TIME_NOW;
-        vqp->read(addr, page_size, (void*)0x1000000, rkey, lid, dct_num);
-        counter.fetch_add(1);
+        vqp[thread_id]->read(addr, page_size, (void*)remote_addr[0], rkey[0], lid, dct_num);
+        // vqp->read(addr, page_size, (void*)0x1000000, rkey, lid, dct_num);
         // printf("%lu\n", TIME_DURATION_US(start_time, TIME_NOW));
     }
     // printf("%lu\n", TIME_DURATION_US(total_start_time, TIME_NOW)/(iter/2));
@@ -227,7 +228,7 @@ int main(int argc, char* argv[]) {
     memset(addr, 0, page_size);
     
     // 创建vQP实例
-    rdmanager::vQP* vqp_list[thread_num];
+    rdmanager::vQP* vqp_list[128];
     rdmanager::vQP* vqp_cache[4096];
     for(int i = 0;i < thread_num;i ++){
         // 创建虚拟上下文，注册内存，建立连接
@@ -237,24 +238,28 @@ int main(int argc, char* argv[]) {
         vcontext->create_connecter("10.10.1.2", "1145");
         rdmanager::vQP* vqp = new rdmanager::vQP(vcontext);
         vqp_list[i] = vqp;
-        printf("%s %u %u %u %u %u %u %u\n", bench_type, &rkey, vcontext->gid1, vcontext->gid1, 
+        printf("%u %lu %lu %lu %lu %u %u\n", &rkey, vcontext->gid1, vcontext->gid2, 
                                             vcontext->interface, vcontext->subnet,
                                             vcontext->lid_, vcontext->dct_num_);
     }
     
     // create vQP cache for test
-    for(int i = 0; i < 4096; i ++) {
-        rdmanager::vContext* vcontext = new rdmanager::vContext(&skip_device_list, &named_device_list);
-        vcontext->memory_register(addr, page_size);
-        if(i == 0 ){
-            vcontext->create_RPC("10.10.1.2", "1145");
+    if(bench_type != "switch"){
+        for(int i = 0; i < 4096; i ++) {
+            rdmanager::vContext* vcontext = new rdmanager::vContext(&skip_device_list, &named_device_list);
+            vcontext->memory_register(addr, page_size);
+            if(i == 0 ){
+                vcontext->create_RPC("10.10.1.2", "1145");
+            }
+            vcontext->create_connecter("10.10.1.2", "1145");
+            rdmanager::vQP* vqp = new rdmanager::vQP(vcontext);
+            vqp_cache[i] = vqp;
+            // printf("%d success\n", i);
+            printf("%u %lu %lu %lu %lu %u %u\n", &rkey, vcontext->gid1, vcontext->gid2, 
+                vcontext->interface, vcontext->subnet,
+                vcontext->lid_, vcontext->dct_num_);
         }
-        vcontext->create_connecter("10.10.1.2", "1145");
-        rdmanager::vQP* vqp = new rdmanager::vQP(vcontext);
-        vqp_cache[i] = vqp;
-        printf("%d success\n", i);
     }
-
     // vcontext->memory_bind(addr, page_size);
     int* data = (int*)addr;
     // loop parse input command, each line like: read/write [rkey]
@@ -275,15 +280,19 @@ int main(int argc, char* argv[]) {
             data[i] = 0;
         }
     } else if(bench_type == "switch") {
-        for(int i = 0;i < thread_num; i++)
-            read_thread[i] = new std::thread(&do_switch, vqp_list[i], addr, rkey, lid, dct);
-        long old_val, new_val;
-        while(counter.load() < thread_num * iter -1){
-            old_val = counter.load();
-            usleep(1000);
-            new_val = counter.load();
-            printf("%lf\n", 1.0*(new_val-old_val)*1000*page_size);
+        for(int i = 0;i < thread_num; i++){
+            read_thread[i] = new std::thread(&do_switch, vqp_list, addr, lid, dct, i);
         }
+        for(int i = 0; i < thread_num; i++){
+            read_thread[i]->join();
+        }
+        // long old_val, new_val;
+        // while(counter.load() < thread_num * iter -1){
+        //     old_val = counter.load();
+        //     usleep(1000);
+        //     new_val = counter.load();
+        //     printf("%lf\n", 1.0*(new_val-old_val)*1000*page_size);
+        // }
     } else if(bench_type == "cache") {
         for(int i = 0; i < thread_num; i++){
             read_thread[i] = new std::thread(&do_mem_cache_test, vqp_cache, addr, i);

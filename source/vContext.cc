@@ -144,7 +144,8 @@ void vContext::create_connecter(const std::string ip, const std::string port) {
     subnet = context_list_[primary_index_].subnet;
     lid_ = context_list_[primary_index_].lid_;
     dct_num_ = context_list_[primary_index_].dct_num_;
-    get_primary_dynamic()->CreateAh(gid1, gid2, interface, subnet, lid_); 
+    for(auto i = back_context_send_.begin(); i!=back_context_send_.end(); i++)
+        (*i)->CreateAh(gid1, gid2, interface, subnet, lid_); 
     // for (auto iter = context_list_.begin(); iter != context_list_.end(); iter ++) {
     //     (*iter).PigeonConnect(ip, port);
     // }
