@@ -289,9 +289,9 @@ int main(int argc, char* argv[]) {
         for(int i = 0;i < thread_num; i++){
             read_thread[i] = new std::thread(&do_switch, vqp_list, addr, lid, dct, i);
         }
-        for(int i = 0; i < thread_num; i++){
-            read_thread[i]->join();
-        }
+        // for(int i = 0; i < thread_num; i++){
+        //     read_thread[i]->join();
+        // }
         long old_val, new_val;
         while(counter.load() < thread_num * iter -1){
             old_val = counter.load();

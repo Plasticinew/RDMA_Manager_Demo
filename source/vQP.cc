@@ -203,7 +203,7 @@ ErrorType vQP::write_main(void* local_addr, uint64_t length, void* remote_addr, 
         send_wr.send_flags = IBV_SEND_SIGNALED;
     send_wr.wr.rdma.remote_addr = (uint64_t)remote_addr;
     send_wr.wr.rdma.rkey = rkey;
-    if(context_->down_primary() && TIME_DURATION_US(last_time, TIME_NOW) > 100000){
+    if(context_->down_primary() && TIME_DURATION_US(last_time, TIME_NOW) > 10000000){
         last_time = TIME_NOW;
         downed = true;
         printf("down before write\n");
@@ -213,7 +213,7 @@ ErrorType vQP::write_main(void* local_addr, uint64_t length, void* remote_addr, 
         perror("Error, ibv_post_send failed");
         return SEND_ERROR;
     }
-    if(!downed && context_->down_primary() && TIME_DURATION_US(last_time, TIME_NOW) > 100000){
+    if(!downed && context_->down_primary() && TIME_DURATION_US(last_time, TIME_NOW) > 10000000){
         last_time = TIME_NOW;
         downed = true;
         printf("down after write\n");
