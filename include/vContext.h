@@ -131,11 +131,16 @@ public:
         command += context_list_[recovery_primary].get_netname();
         command += " up";
         system(command.c_str());
-        if(context_list_[recovery_primary].connected() == PIGEON_STATUS_ERROR)
-            readd_device(recovery_primary);
+        if(!context_list_[recovery_primary].connected()) {
+            add_device(context_list_[recovery_primary].device_);
+            secondary_index_ = context_list_.size()-1;
+        }
     }
 
     void readd_device(int index);
+    int primary_index_ = 0;
+    int secondary_index_ = 1;
+    int recovery_primary = 0;
 
 private:
     std::vector<PigeonDevice> skip_device_list_;
@@ -145,9 +150,7 @@ private:
     std::vector<DynamicContext*> back_context_send_ ;
     std::vector<DynamicContext*> back_context_recv_ ;
     std::string ip_, port_;
-    int primary_index_ = 0;
-    int secondary_index_ = 1;
-    int recovery_primary = 0;
+
     std::random_device r;
     std::mt19937 rand_val;
 };
