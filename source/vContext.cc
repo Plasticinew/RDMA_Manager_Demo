@@ -3,8 +3,8 @@
 
 namespace rdmanager{
 
-extern std::map<std::string, DynamicContext*> r_context;
-extern std::map<std::string, DynamicContext*> s_context;
+extern std::map<std::string, DynamicContext> r_context;
+extern std::map<std::string, DynamicContext> s_context;
 
 // 管理一组网卡多个QP的上下文
 vContext::vContext(std::vector<PigeonDevice> *skip_device_list, std::vector<PigeonDevice> *named_device_list) {
@@ -54,16 +54,18 @@ vContext::vContext(std::vector<PigeonDevice> *skip_device_list, std::vector<Pige
                         RPC_context_ = rpc_context;
                     }
                     if(r_context.find((*iter).name) == r_context.end()){
-                        r_context[(*iter).name] = new DynamicContext(device_list[i], (*iter), context.get_pd());
-                        r_context[(*iter).name]->DynamicListen();
+                        r_context.insert(std::pair((*iter).name, DynamicContext(device_list[i], (*iter), context.get_pd())));
+                        // r_context[(*iter).name] = DynamicContext(device_list[i], (*iter), context.get_pd());
+                        r_context.find((*iter).name)->second.DynamicConnect();
                     }
-                    back_context_recv_.push_back(r_context[(*iter).name]);
+                    back_context_recv_.push_back(&r_context.find((*iter).name)->second);
                     if(s_context.find((*iter).name) == s_context.end()){
-                        s_context[(*iter).name] = new DynamicContext(device_list[i], (*iter), context.get_pd());
-                        s_context[(*iter).name]->DynamicConnect();
+                        s_context.insert(std::pair((*iter).name, DynamicContext(device_list[i], (*iter), context.get_pd())));
+                        // r_context[(*iter).name] = DynamicContext(device_list[i], (*iter), context.get_pd());
+                        s_context.find((*iter).name)->second.DynamicConnect();
                     }
-                    back_context_send_.push_back(s_context[(*iter).name]);
-                    context.SetDynamicConnection(r_context[(*iter).name]);
+                    back_context_recv_.push_back(&s_context.find((*iter).name)->second);
+                    context.SetDynamicConnection(&r_context.find((*iter).name)->second);
                     // DynamicContext s_context(device_list[i], (*iter), context.get_pd());
                     // s_context.DynamicConnect();
                     // back_context_send_.push_back(s_context);
@@ -111,16 +113,18 @@ void vContext::add_device(PigeonDevice device) {
                 // s_context.DynamicConnect();
                 // back_context_send_.push_back(s_context);
                 if(r_context.find(device.name) == r_context.end()){
-                    r_context[device.name] = new DynamicContext(device_list[i], device, context.get_pd());
-                    r_context[device.name]->DynamicListen();
+                    r_context.insert(std::pair(device.name, DynamicContext(device_list[i], device, context.get_pd())));
+                    // r_context[(*iter).name] = DynamicContext(device_list[i], (*iter), context.get_pd());
+                    r_context.find(device.name)->second.DynamicConnect();
                 }
-                back_context_recv_.push_back(r_context[device.name]);
+                back_context_recv_.push_back(&r_context.find(device.name)->second);
                 if(s_context.find(device.name) == s_context.end()){
-                    s_context[device.name] = new DynamicContext(device_list[i], device, context.get_pd());
-                    s_context[device.name]->DynamicConnect();
+                    s_context.insert(std::pair(device.name, DynamicContext(device_list[i], device, context.get_pd())));
+                    // r_context[(*iter).name] = DynamicContext(device_list[i], (*iter), context.get_pd());
+                    s_context.find(device.name)->second.DynamicConnect();
                 }
-                back_context_send_.push_back(s_context[device.name]);
-                context.SetDynamicConnection(r_context[device.name]);
+                back_context_recv_.push_back(&s_context.find(device.name)->second);
+                context.SetDynamicConnection(&r_context.find(device.name)->second);
                 break;
             }
         }

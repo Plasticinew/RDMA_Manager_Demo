@@ -218,7 +218,8 @@ int main(int argc, char* argv[]) {
 
     std::vector<PigeonDevice> skip_device_list;
     // std::vector<PigeonDevice> named_device_list = {{"mlx5_4", "10.10.1.14"}, {"mlx5_7", "10.10.1.17"}};
-    std::vector<PigeonDevice> named_device_list = {{"mlx5_2", "10.10.1.1"}};
+    std::vector<PigeonDevice> named_device_list = {{"mlx5_4", "10.10.1.3"}, {"mlx5_5", "10.10.1.4"}};
+    // std::vector<PigeonDevice> named_device_list = {{"mlx5_5", "10.10.1.4"}};
     // std::vector<PigeonDevice> named_device_list = {{"mlx5_7", "10.10.1.13"}, {"mlx5_4", "10.10.1.10"}};
     // std::vector<PigeonDevice> named_device_list = {{"mlx5_2", "10.10.1.1"}};
     // 分配大页内存
@@ -236,6 +237,9 @@ int main(int argc, char* argv[]) {
         vcontext->create_connecter("10.10.1.2", "1145");
         rdmanager::vQP* vqp = new rdmanager::vQP(vcontext);
         vqp_list[i] = vqp;
+        printf("%s %u %u %u %u %u %u %u\n", bench_type, &rkey, vcontext->gid1, vcontext->gid1, 
+                                            vcontext->interface, vcontext->subnet,
+                                            vcontext->lid_, vcontext->dct_num_);
     }
     
     // create vQP cache for test
@@ -258,7 +262,6 @@ int main(int argc, char* argv[]) {
     uint32_t lid;
     uint32_t dct;
     std::thread* read_thread[4096];
-    printf("%s %u %u %u\n", bench_type, &rkey, &lid, &dct);
     if(bench_type == "read") {
         for(int i = 0;i < thread_num; i++){
             read_thread[i] = new std::thread(&do_read, vqp_list[i], addr, rkey, lid, dct);

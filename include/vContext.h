@@ -8,8 +8,8 @@
 
 namespace rdmanager{
 
-static std::map<std::string, DynamicContext*> r_context;
-static std::map<std::string, DynamicContext*> s_context;
+static std::map<std::string, DynamicContext> r_context;
+static std::map<std::string, DynamicContext> s_context;
 
 class vContext{
 public:
