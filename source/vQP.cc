@@ -17,7 +17,7 @@ void vQP::recovery(void* local_addr, uint64_t length, uint32_t lid, uint32_t dct
     read_log = new CmdMsgBlock();
     memset(read_log, 0, sizeof(CmdMsgBlock));
     // read_log_mr = context_->memory_register_temp((void *)read_log, sizeof(CmdMsgBlock));
-    read_backup(local_addr, sizeof(uint32_t)*64, (void*)(context_->log_addr_persist), context_->log_rkey_persist, lid, dct_num);
+    read_backup(local_addr, sizeof(uint32_t)*(end_-start_), (void*)(context_->log_addr_persist + sizeof(uint32_t)*start_), context_->log_rkey_persist, lid, dct_num);
     // printf("read log@%lu\n", context_->log_addr_persist);
     memcpy(read_log, local_addr, sizeof(uint32_t)*64);
     uint32_t* last_stamp = (uint32_t*)read_log;
@@ -32,7 +32,7 @@ void vQP::recovery(void* local_addr, uint64_t length, uint32_t lid, uint32_t dct
                 printf("double failure!\n");
             }
         }
-        else if(work_queue_[i%wr_buffer_size].wr_length_ != 0 && work_queue_[i%wr_buffer_size].wr_timestamp_ != last_stamp[i%wr_buffer_size]){
+        else if(work_queue_[i%wr_buffer_size].wr_length_ != 0 && work_queue_[i%wr_buffer_size].wr_timestamp_ != last_stamp[i-start_]){
             if(work_queue_[i%wr_buffer_size].wr_optype_ == WRITE){
                 err = write_backup((void*)work_queue_[i%wr_buffer_size].wr_local_addr_, 
                     work_queue_[i%wr_buffer_size].wr_length_, 
