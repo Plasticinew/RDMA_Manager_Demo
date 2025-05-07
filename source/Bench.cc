@@ -182,23 +182,23 @@ void do_switch(rdmanager::vQP** vqp, void* addr, uint32_t lid, uint32_t dct_num,
     auto total_start_time = TIME_NOW;
     // system("sudo ip link set ens1f0v0 down");
     pthread_barrier_wait(&barrier_start);
-    for(uint64_t i = 0; i < iter/2; i++){
-        start_time = TIME_NOW;
+    for(uint64_t i = 0; i < iter; i++){
+        // start_time = TIME_NOW;
         vqp[thread_id]->write(addr, 64, (void*)remote_addr[0], rkey[0], lid, dct_num);
         counter.fetch_add(1);
         // printf("%lu\n", TIME_DURATION_US(start_time, TIME_NOW));
     }
-    pthread_barrier_wait(&barrier_start);
-    printf("%lu\n", TIME_DURATION_US(total_start_time, TIME_NOW)/(iter/2));
-    // vqp[thread_id]->switch_card();
-    total_start_time = TIME_NOW;
-    for(uint64_t i = 0; i < iter/2; i++){
-        start_time = TIME_NOW;
-        vqp[thread_id]->write(addr, 64, (void*)remote_addr[0], rkey[0], lid, dct_num);
-        counter.fetch_add(1);
-        // vqp->read(addr, page_size, (void*)0x1000000, rkey, lid, dct_num);
-        // printf("%lu\n", TIME_DURATION_US(start_time, TIME_NOW));
-    }
+    // pthread_barrier_wait(&barrier_start);
+    // printf("%lu\n", TIME_DURATION_US(total_start_time, TIME_NOW)/(iter/2));
+    // // vqp[thread_id]->switch_card();
+    // total_start_time = TIME_NOW;
+    // for(uint64_t i = 0; i < iter/2; i++){
+    //     start_time = TIME_NOW;
+    //     vqp[thread_id]->write(addr, 64, (void*)remote_addr[0], rkey[0], lid, dct_num);
+    //     counter.fetch_add(1);
+    //     // vqp->read(addr, page_size, (void*)0x1000000, rkey, lid, dct_num);
+    //     // printf("%lu\n", TIME_DURATION_US(start_time, TIME_NOW));
+    // }
     // printf("%lu\n", TIME_DURATION_US(total_start_time, TIME_NOW)/(iter/2));
     return;
 }
