@@ -15,7 +15,7 @@ void vQP::recovery(void* local_addr, uint64_t length, uint32_t lid, uint32_t dct
     read_log = new CmdMsgBlock();
     memset(read_log, 0, sizeof(CmdMsgBlock));
     // read_log_mr = context_->memory_register_temp((void *)read_log, sizeof(CmdMsgBlock));
-    read_backup(local_addr, sizeof(uint32_t)*64, (void*)(context_->get_log_addr()), context_->get_log_rkey(), lid, dct_num);
+    read_backup(local_addr, sizeof(uint32_t)*64, (void*)(context_->log_addr_persist), context_->log_rkey_persist, lid, dct_num);
     memcpy(read_log, local_addr, sizeof(uint32_t)*64);
     uint32_t* last_stamp = (uint32_t*)read_log;
     for(int i = start_; i < end_; i++){
@@ -172,8 +172,8 @@ ErrorType vQP::write_main(void* local_addr, uint64_t length, void* remote_addr, 
         log_wr.next = NULL;
         log_wr.opcode = IBV_WR_RDMA_WRITE;
         log_wr.send_flags = IBV_SEND_SIGNALED | IBV_SEND_INLINE;
-        log_wr.wr.rdma.remote_addr = context_->get_log_addr() + work_queue_finished_ * sizeof(uint32_t);
-        log_wr.wr.rdma.rkey = context_->get_log_rkey();
+        log_wr.wr.rdma.remote_addr = context_->log_addr_persist + work_queue_finished_ * sizeof(uint32_t);
+        log_wr.wr.rdma.rkey = context_->log_rkey_persist;
     }        
     struct ibv_sge sge;
     sge.addr = (uint64_t)local_addr;

@@ -106,6 +106,9 @@ public:
         return context_list_[primary_index_].server_cmd_rkey_;
     }
 
+    uint64_t log_addr_persist;
+    uint32_t log_rkey_persist;
+
     bool down_primary() {
         if(rand_val()%100 == 1){
             // downed = true;
