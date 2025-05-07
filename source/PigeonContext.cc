@@ -430,7 +430,7 @@ void PigeonContext::PigeonRPCAlloc(uint64_t* addr, uint32_t* rkey, size_t size) 
     /* wait for response */
     auto start = TIME_NOW;
     while (cmd_resp_->notify == NOTIFY_IDLE) {
-      if (TIME_DURATION_US(start, TIME_NOW) > RDMA_TIMEOUT_US) {
+      if (TIME_DURATION_US(start, TIME_NOW) > RDMA_TIMEOUT_US*100) {
         printf("wait for request completion timeout\n");
         return;
       }
