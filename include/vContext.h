@@ -98,8 +98,6 @@ public:
         pigeon_swap(primary_index_, secondary_index_);
         if(!context_list_[primary_index_].connected()){
             create_connecter(ip_, port_);
-            memory_register((void*)addr_remote, length_remote);
-            create_RPC(ip_, port_);
         }
     }
 
@@ -138,6 +136,8 @@ public:
         system(command.c_str());
         if(!context_list_[recovery_primary].connected()) {
             add_device(context_list_[recovery_primary].device_);
+            memory_register((void*)addr_remote, length_remote);
+            create_RPC(ip_, port_);
             secondary_index_ = context_list_.size()-1;
         }
     }
