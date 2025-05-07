@@ -27,7 +27,7 @@ void vQP::recovery(void* local_addr, uint64_t length, uint32_t lid, uint32_t dct
                 work_queue_[i%wr_buffer_size].wr_length_, 
                 (void*)work_queue_[i%wr_buffer_size].wr_remote_addr_, 
                 work_queue_[i%wr_buffer_size].wr_rkey_, lid, dct_num);
-            printf("fix read error\n");
+            // printf("fix read error\n");
             if(err != NO_ERROR){
                 printf("double failure!\n");
             }
@@ -38,7 +38,7 @@ void vQP::recovery(void* local_addr, uint64_t length, uint32_t lid, uint32_t dct
                     work_queue_[i%wr_buffer_size].wr_length_, 
                     (void*)work_queue_[i%wr_buffer_size].wr_remote_addr_, 
                     work_queue_[i%wr_buffer_size].wr_rkey_, lid, dct_num);
-                printf("fix write error\n");
+                // printf("fix write error\n");
                 if(err != NO_ERROR){
                     printf("double failure!\n");
                 }
@@ -84,7 +84,7 @@ ErrorType vQP::write(void* local_addr, uint64_t length, void* remote_addr, uint3
             return NO_ERROR;
         } else if(err == RECIEVE_ERROR){
             switch_card();
-            printf("change nic\n");
+            // printf("change nic\n");
             recovery(local_addr, length, lid, dct_num);
             return NO_ERROR;
             // return write(local_addr, length, remote_addr, rkey, context_->lid_, context_->dct_num_);
@@ -206,7 +206,7 @@ ErrorType vQP::write_main(void* local_addr, uint64_t length, void* remote_addr, 
     if(context_->down_primary() && TIME_DURATION_US(last_time, TIME_NOW) > 10000000){
         last_time = TIME_NOW;
         downed = true;
-        printf("down before write\n");
+        // printf("down before write\n");
     }
     ibv_qp* qp = context_->get_qp();
     if (ibv_post_send(qp, &send_wr, &bad_send_wr)) {
@@ -216,7 +216,7 @@ ErrorType vQP::write_main(void* local_addr, uint64_t length, void* remote_addr, 
     if(!downed && context_->down_primary() && TIME_DURATION_US(last_time, TIME_NOW) > 10000000){
         last_time = TIME_NOW;
         downed = true;
-        printf("down after write\n");
+        // printf("down after write\n");
     }
     work_queue_[work_queue_finished_].wr_timestamp_ = time_stamp;
     work_queue_[work_queue_finished_].wr_local_addr_ = (uint64_t)local_addr;
@@ -232,7 +232,7 @@ ErrorType vQP::write_main(void* local_addr, uint64_t length, void* remote_addr, 
     ibv_cq* cq = context_->get_cq();
     while(true) {
         if(TIME_DURATION_US(start, TIME_NOW) > RDMA_TIMEOUT_US) {
-            std::cerr << "Error, write timeout" << std::endl;
+            // std::cerr << "Error, write timeout" << std::endl;
             break;
         }
         if(ibv_poll_cq(cq, 1, &wc) > 0) {
