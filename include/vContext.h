@@ -37,6 +37,8 @@ public:
         for(int i = 0; i < back_context_send_.size(); i++) {
             back_context_send_[i]->PigeonMemoryRegister(addr, length);
         }
+        addr_remote = (uint64_t)addr;
+        length_remote = length;
     }
 
     ibv_mr* memory_register_temp(void* addr, size_t length) {
@@ -94,8 +96,11 @@ public:
         context_list_[primary_index_].status_ = PIGEON_STATUS_ERROR;
         context_list_[primary_index_].PigeonDisconnected();
         pigeon_swap(primary_index_, secondary_index_);
-        if(!context_list_[primary_index_].connected())
+        if(!context_list_[primary_index_].connected()){
             create_connecter(ip_, port_);
+            memory_register((void*)addr_remote, length_remote);
+            create_RPC(ip_, port_);
+        }
     }
 
     bool connected() {
@@ -150,7 +155,8 @@ private:
     std::vector<DynamicContext*> back_context_send_ ;
     std::vector<DynamicContext*> back_context_recv_ ;
     std::string ip_, port_;
-
+    uint64_t addr_remote;
+    uint64_t length_remote;
     std::random_device r;
     std::mt19937 rand_val;
 };
