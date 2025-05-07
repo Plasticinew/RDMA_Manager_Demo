@@ -240,7 +240,7 @@ int main(int argc, char* argv[]) {
         vcontext->create_RPC("10.10.1.2", "1145");
         vcontext->create_connecter("10.10.1.2", "1145");
         if(i == 0){
-            vcontext->enable_failure = true;
+            vcontext->total_failure = 3;
         }
         rdmanager::vQP* vqp = new rdmanager::vQP(vcontext);
         vqp_list[i] = vqp;
