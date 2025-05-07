@@ -138,9 +138,9 @@ public:
         // usleep(1000);
         if(!context_list_[recovery_primary].connected()) {
             add_device(context_list_[recovery_primary].device_);
-            context_list_[recovery_primary].PigeonMemoryRegister((void*)addr_remote, length_remote);
             // create_RPC(ip_, port_);
             secondary_index_ = context_list_.size()-1;
+            context_list_[secondary_index_].PigeonMemoryRegister((void*)addr_remote, length_remote);
         }
     }
 
