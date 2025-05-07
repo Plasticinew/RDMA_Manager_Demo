@@ -181,7 +181,6 @@ void do_switch(rdmanager::vQP** vqp, void* addr, uint32_t lid, uint32_t dct_num,
         vqp[0]->alloc_RPC(&remote_addr[0], &rkey[0], page_size*1024*1024*16);
     auto start_time = TIME_NOW;
     auto total_start_time = TIME_NOW;
-    system("sudo ip link set enp4s0 down");
     // system("sudo ip link set ens1f0v0 down");
     pthread_barrier_wait(&barrier_start);
     for(uint64_t i = 0; i < iter/2; i++){
@@ -192,6 +191,7 @@ void do_switch(rdmanager::vQP** vqp, void* addr, uint32_t lid, uint32_t dct_num,
     pthread_barrier_wait(&barrier_start);
     printf("%lu\n", TIME_DURATION_US(total_start_time, TIME_NOW)/(iter/2));
     // vqp[thread_id]->switch_card();
+    system("sudo ip link set enp4s0 down");
     total_start_time = TIME_NOW;
     for(uint64_t i = 0; i < iter/2; i++){
         start_time = TIME_NOW;
