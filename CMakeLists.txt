@@ -6,7 +6,7 @@ set(CMAKE_BUILD_TYPE "Debug")
 
 set(RDMA_LIB "-lrdmacm -libverbs")
 set(CMAKE_CXX_FLAGS "-std=c++17 ${CMAKE_CXX_FLAGS} -fPIC")
-set(CMAKE_CXX_FLAGS "-pthread -ldl -lrt ${RDMA_LIB} ${CMAKE_CXX_FLAGS} -lhiredis")
+set(CMAKE_CXX_FLAGS "-pthread -ldl -lrt ${RDMA_LIB} ${CMAKE_CXX_FLAGS}")
 set(CMAKE_EXPORT_COMPILE_COMMANDS True)
 
 
