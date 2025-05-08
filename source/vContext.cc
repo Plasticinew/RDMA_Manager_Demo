@@ -189,11 +189,13 @@ void vContext::readd_device(int index) {
     
 }
 
-void vContext::create_connecter(const std::string ip, const std::string port) {
+bool vContext::create_connecter(const std::string ip, const std::string port) {
     // create QP connection with certain ip...
     ip_ = ip;
     port_ = port;
-    context_list_[primary_index_].PigeonConnect(ip, port, CONN_ONESIDE, 0);
+    if(!context_list_[primary_index_].PigeonConnect(ip, port, CONN_ONESIDE, 0)){
+        return false;
+    }
     gid1 = context_list_[primary_index_].gid1;
     gid2 = context_list_[primary_index_].gid2;
     interface = context_list_[primary_index_].interface;
@@ -209,7 +211,7 @@ void vContext::create_connecter(const std::string ip, const std::string port) {
     // for (auto iter = context_list_.begin(); iter != context_list_.end(); iter ++) {
     //     (*iter).PigeonConnect(ip, port);
     // }
-    return;
+    return true;
 }
 
 void vContext::create_listener(const std::string port) {

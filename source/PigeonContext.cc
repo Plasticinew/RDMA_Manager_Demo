@@ -24,12 +24,12 @@ PigeonContext::PigeonContext(ibv_context* context, PigeonDevice device) {
     assert(channel_ != NULL);
 }
 
-void PigeonContext::PigeonConnect(const std::string ip, const std::string port, uint8_t access_type, uint16_t node) {
+bool PigeonContext::PigeonConnect(const std::string ip, const std::string port, uint8_t access_type, uint16_t node) {
 
     int result;
     addrinfo *t = NULL;
     addrinfo *res;
-    while( t == NULL ) {
+    // while( t == NULL ) {
         // while(result != 0)
         result = getaddrinfo(ip.c_str(), port.c_str(), NULL, &res);
         assert(result == 0);
@@ -44,9 +44,11 @@ void PigeonContext::PigeonConnect(const std::string ip, const std::string port, 
                 break;
             }
         }
-        if(t == NULL)
+        if(t == NULL){
             printf("I cannot find\n");
-    }
+            return false;
+        }
+    // }
     // assert(t != NULL);
 
     rdma_cm_event* event;
@@ -122,7 +124,7 @@ void PigeonContext::PigeonConnect(const std::string ip, const std::string port, 
     msg_mr_ = PigeonMemReg((void *)cmd_msg_, sizeof(CmdMsgBlock));
     if (!msg_mr_) {
         perror("ibv_reg_mr m_msg_mr_ fail");
-        return;
+        return false;
     }
 
     cmd_resp_ = new CmdMsgRespBlock();
@@ -131,7 +133,7 @@ void PigeonContext::PigeonConnect(const std::string ip, const std::string port, 
         PigeonMemReg((void *)cmd_resp_, sizeof(CmdMsgRespBlock));
     if (!resp_mr_) {
         perror("ibv_reg_mr m_resp_mr_ fail");
-        return;
+        return false;
     }
 
     // reg_buf_ = new char[MAX_REMOTE_SIZE];
@@ -148,7 +150,7 @@ void PigeonContext::PigeonConnect(const std::string ip, const std::string port, 
     // Connect finished
     cq_ = cq;
 
-    return;
+    return true;
 }
 
 void PigeonContext::PigeonListen(const std::string ip, const std::string port) {

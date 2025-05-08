@@ -32,7 +32,7 @@ struct WorkerInfo {
         dynamic_context = dynamic;
     }
 
-    void PigeonConnect(const std::string ip, const std::string port, uint8_t access_type, uint16_t node);
+    bool PigeonConnect(const std::string ip, const std::string port, uint8_t access_type, uint16_t node);
     void PigeonListen(const std::string ip, const std::string port);
     void PigeonAccept(rdma_cm_id* cm_id, uint8_t connect_type, uint16_t node_id);
     void PigeonMemoryRegister(void* addr, size_t length);

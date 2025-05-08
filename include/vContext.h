@@ -29,7 +29,7 @@ public:
 
     void add_device(PigeonDevice device);
     void create_RPC(const std::string ip, const std::string port);
-    void create_connecter(const std::string ip, const std::string port);
+    bool create_connecter(const std::string ip, const std::string port);
     void create_listener(const std::string port);
     void alloc_RPC(uint64_t* addr, uint32_t* rkey, uint64_t size);
 
@@ -97,15 +97,20 @@ public:
     }
 
     void switch_pigeon() {
-        std::unique_lock<std::mutex> lock(m_mutex_);
         context_list_[primary_index_].status_ = PIGEON_STATUS_ERROR;
         // context_list_[primary_index_].PigeonDisconnected();
         // secondary_index_ = context_list_.size()-1;
         pigeon_swap(primary_index_, secondary_index_);
+        retry:
+        std::unique_lock<std::mutex> lock(m_mutex_);
         if(!context_list_[primary_index_].connected()){
-            create_connecter(ip_, port_);
+            if(!create_connecter(ip_, port_)){
+                lock.unlock();
+                std::this_thread::yield();
+                goto retry;
+            }
         }
-        lock.unlock();
+        // lock.unlock();
     }
 
     bool connected() {
