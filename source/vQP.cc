@@ -45,7 +45,7 @@ void vQP::recovery(void* local_addr, uint64_t length, uint32_t lid, uint32_t dct
             }
         }
     }
-    context_->up_primary();
+    // context_->up_primary();
     downed = false;
 }
 

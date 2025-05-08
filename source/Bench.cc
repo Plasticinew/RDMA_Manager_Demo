@@ -9,7 +9,7 @@
 const uint64_t page_size = 1024*4;
 
 // 读写的次数
-const uint64_t iter = 1000000;
+const uint64_t iter = 100000;
 
 // 线程数
 uint64_t thread_num = 4;
