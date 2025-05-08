@@ -66,10 +66,10 @@ public:
     ibv_qp* get_qp() {
         // TODO: automatically remove the pigeon that is in error status and add a new one 
         while (context_list_[primary_index_].get_status() == PigeonStatus::PIGEON_STATUS_INIT);
-        while (context_list_[primary_index_].get_status() == PigeonStatus::PIGEON_STATUS_ERROR) {
-            pigeon_swap(primary_index_, secondary_index_);
-            pigeon_debug("primary qp error, switch to secondary qp\n");
-        } 
+        // while (context_list_[primary_index_].get_status() == PigeonStatus::PIGEON_STATUS_ERROR) {
+        //     pigeon_swap(primary_index_, secondary_index_);
+        //     pigeon_debug("primary qp error, switch to secondary qp\n");
+        // } 
         // context_list_[primary_index_].show_device();
         return context_list_[primary_index_].get_qp();
     }
@@ -77,10 +77,10 @@ public:
     ibv_cq* get_cq() {
         // TODO: automatically remove the pigeon that is in error status and add a new one 
         while (context_list_[primary_index_].get_status() == PigeonStatus::PIGEON_STATUS_INIT);
-        while (context_list_[primary_index_].get_status() == PigeonStatus::PIGEON_STATUS_ERROR) {
-            pigeon_swap(primary_index_, secondary_index_);
-            pigeon_debug("primary qp error, switch to secondary qp\n");
-        }
+        // while (context_list_[primary_index_].get_status() == PigeonStatus::PIGEON_STATUS_ERROR) {
+        //     pigeon_swap(primary_index_, secondary_index_);
+        //     pigeon_debug("primary qp error, switch to secondary qp\n");
+        // }
         // context_list_[primary_index_].show_device();
         return context_list_[primary_index_].get_cq();
     }
