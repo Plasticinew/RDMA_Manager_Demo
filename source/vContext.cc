@@ -59,20 +59,20 @@ vContext::vContext(std::vector<PigeonDevice> *skip_device_list, std::vector<Pige
                         r_context[(*iter).name]->DynamicListen();
                     }
                     back_context_recv_.push_back(r_context[(*iter).name]);
-                    // if(s_context.find((*iter).name) == s_context.end()){
-                    //     s_context[(*iter).name] = new DynamicContext(device_list[i], (*iter), context.get_pd());
-                    //     // r_context[(*iter).name] = DynamicContext(device_list[i], (*iter), context.get_pd());
-                    //     s_context[(*iter).name]->DynamicConnect();
-                    // }
-                    // back_context_send_.push_back(s_context[(*iter).name]);
-                    // context.SetDynamicConnection(r_context[(*iter).name]);
-                    DynamicContext r_context(device_list[i], (*iter), context.get_pd());
-                    r_context.DynamicListen();
-                    back_context_recv_.push_back(&r_context);
-                    DynamicContext s_context(device_list[i], (*iter), context.get_pd());
-                    s_context.DynamicConnect();
-                    back_context_send_.push_back(&s_context);
-                    context.SetDynamicConnection(&r_context);
+                    if(s_context.find((*iter).name) == s_context.end()){
+                        s_context[(*iter).name] = new DynamicContext(device_list[i], (*iter), context.get_pd());
+                        // r_context[(*iter).name] = DynamicContext(device_list[i], (*iter), context.get_pd());
+                        s_context[(*iter).name]->DynamicConnect();
+                    }
+                    back_context_send_.push_back(s_context[(*iter).name]);
+                    context.SetDynamicConnection(r_context[(*iter).name]);
+                    // DynamicContext r_context(device_list[i], (*iter), context.get_pd());
+                    // r_context.DynamicListen();
+                    // back_context_recv_.push_back(&r_context);
+                    // DynamicContext s_context(device_list[i], (*iter), context.get_pd());
+                    // s_context.DynamicConnect();
+                    // back_context_send_.push_back(&s_context);
+                    // context.SetDynamicConnection(&r_context);
                     context_list_.push_back(context);
                     // DynamicContext s_context(device_list[i], (*iter), context.get_pd());
                     // s_context.DynamicConnect();

@@ -267,6 +267,7 @@ int main(int argc, char* argv[]) {
                 vcontext->lid_, vcontext->dct_num_);
         }
     }
+    getchar();
     // vcontext->memory_bind(addr, page_size);
     int* data = (int*)addr;
     // loop parse input command, each line like: read/write [rkey]
