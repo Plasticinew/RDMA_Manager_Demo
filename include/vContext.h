@@ -12,7 +12,7 @@
 
 namespace rdmanager{
 
-std::mutex m_mutex_;
+static std::mutex m_mutex_;
 
 static std::map<std::string, DynamicContext*> r_context;
 static std::map<std::string, DynamicContext*> s_context;
