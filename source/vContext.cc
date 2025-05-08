@@ -214,7 +214,11 @@ bool vContext::create_connecter(const std::string ip, const std::string port) {
     log_addr_persist = get_log_addr();
     log_rkey_persist = get_log_rkey();
     context_list_[primary_index_].status_ = PigeonStatus::PIGEON_STATUS_CONNECTED;
-
+    
+    if(!context_list_[secondary_index_].PigeonConnect(ip, port, CONN_ONESIDE, 0)){
+        return false;
+    }
+    context_list_[secondary_index_].status_ = PigeonStatus::PIGEON_STATUS_CONNECTED;
     // for (auto iter = context_list_.begin(); iter != context_list_.end(); iter ++) {
     //     (*iter).PigeonConnect(ip, port);
     // }
