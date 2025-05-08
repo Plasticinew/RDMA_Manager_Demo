@@ -85,6 +85,7 @@ ErrorType vQP::write(void* local_addr, uint64_t length, void* remote_addr, uint3
             return NO_ERROR;
         } else if(err == RECIEVE_ERROR){
             switch_card();
+            // context_->switch_pigeon();
             // printf("change nic\n");
             recovery(local_addr, length, lid, dct_num);
             return NO_ERROR;

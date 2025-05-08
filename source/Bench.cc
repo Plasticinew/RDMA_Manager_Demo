@@ -130,30 +130,27 @@ void do_qp_cache_test(rdmanager::vQP** vqp, void* addr, int thread_id) {
     std::random_device r;
     std::mt19937 rand_val(r());
     int index = 0;
-    int counter[1000];
-    memset(counter, 0, sizeof(int)*1000);
     pthread_barrier_wait(&barrier_start);
-    start_time_global = TIME_NOW;
+    // start_time_global = TIME_NOW;
     for(int i = 0; i < 64; i ++){
         int index = 0;
-        int counter[1000];
-        memset(counter, 0, sizeof(int)*1000);
         pthread_barrier_wait(&barrier_start);
-        start_time_global = TIME_NOW;
+        // start_time_global = TIME_NOW;
         for(uint64_t j = 0; j < read_items; j++){
             index = rand_val()%((i+1) * 64);
-            start_time = TIME_NOW;
-            vqp[index]->read_main(addr, page_size, (void*)(remote_addr[0] + page_size*(rand_val()%(4096*4096))), rkey[0]);
+            // start_time = TIME_NOW;
+            vqp[index]->read_main(addr, 1024, (void*)(remote_addr[0] + page_size*(rand_val()%(1024*128))), rkey[0]);
             // printf("%lu\n", TIME_DURATION_US(start_time, TIME_NOW));
+            counter.fetch_add(1);
         }
 
-        global_time[thread_id] = TIME_DURATION_US(start_time_global, TIME_NOW);
-        double total_time = 0;
-        for(int k = 0; k < thread_num; k++){
-            total_time += global_time[k]/read_items;
-        }
-        if(thread_id == 0)
-            printf("%lu QP, %lu\n", (i+1) * 64 , total_time/thread_num);    
+        // global_time[thread_id] = TIME_DURATION_US(start_time_global, TIME_NOW);
+        // double total_time = 0;
+        // for(int k = 0; k < thread_num; k++){
+        //     total_time += global_time[k]/read_items;
+        // }
+        // if(thread_id == 0)
+        //     printf("%lu QP, %lu\n", (i+1) * 64 , total_time/thread_num);    
     }
     return;
 }
@@ -315,6 +312,13 @@ int main(int argc, char* argv[]) {
     } else if(bench_type == "qp") {
         for(int i = 0;i < thread_num; i++){
             read_thread[i] = new std::thread(&do_qp_cache_test, vqp_cache, addr, i);
+        }
+        long old_val, new_val;
+        while(counter.load() < thread_num * iter -1){
+            old_val = counter.load();
+            usleep(1000);
+            new_val = counter.load();
+            printf("%lf\n", 1.0*(new_val-old_val)*1000*page_size);
         }
     } else if(bench_type == "exit") {
         return 0;
