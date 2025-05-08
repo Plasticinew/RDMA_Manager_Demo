@@ -26,18 +26,18 @@ PigeonContext::PigeonContext(ibv_context* context, PigeonDevice device) {
 
 void PigeonContext::PigeonConnect(const std::string ip, const std::string port, uint8_t access_type, uint16_t node) {
 
-    addrinfo *res;
-    int result = getaddrinfo(ip.c_str(), port.c_str(), NULL, &res);
-    assert(result == 0);
-
-    struct sockaddr_in src_addr;   // 设置源地址（指定网卡设备）
-    memset(&src_addr, 0, sizeof(src_addr));
-    src_addr.sin_family = AF_INET;
-    inet_pton(AF_INET, device_.ip.c_str(), &src_addr.sin_addr); // 本地网卡IP地址
-
-
+    int result;
     addrinfo *t = NULL;
+    addrinfo *res;
     while( t == NULL ) {
+        result = getaddrinfo(ip.c_str(), port.c_str(), NULL, &res);
+        assert(result == 0);
+    
+        struct sockaddr_in src_addr;   // 设置源地址（指定网卡设备）
+        memset(&src_addr, 0, sizeof(src_addr));
+        src_addr.sin_family = AF_INET;
+        inet_pton(AF_INET, device_.ip.c_str(), &src_addr.sin_addr); // 本地网卡IP地址
+        
         for(t = res; t; t = t->ai_next) {
             if(!rdma_resolve_addr(cm_id_, (struct sockaddr *)&src_addr, t->ai_addr, RESOLVE_TIMEOUT_MS)) {
                 break;
