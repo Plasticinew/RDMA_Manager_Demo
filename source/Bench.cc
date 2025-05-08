@@ -126,18 +126,17 @@ void do_qp_cache_test(rdmanager::vQP** vqp, void* addr, int thread_id) {
     auto start_time_global = TIME_NOW;
     printf("%lu\n", TIME_NOW);
     uint64_t read_items = 1024*1024;
-    uint64_t mr_num = 4096;
     std::random_device r;
     std::mt19937 rand_val(r());
     int index = 0;
     pthread_barrier_wait(&barrier_start);
     // start_time_global = TIME_NOW;
-    for(int i = 0; i < 64; i ++){
+    // for(int i = 0; i < 16; i ++){
         int index = 0;
         pthread_barrier_wait(&barrier_start);
         // start_time_global = TIME_NOW;
         for(uint64_t j = 0; j < read_items; j++){
-            index = rand_val()%((i+1) * 64);
+            index = rand_val()%(128);
             // start_time = TIME_NOW;
             vqp[index]->read_main(addr, 1024, (void*)(remote_addr[0] + page_size*(rand_val()%(1024*128))), rkey[0]);
             // printf("%lu\n", TIME_DURATION_US(start_time, TIME_NOW));
@@ -151,7 +150,7 @@ void do_qp_cache_test(rdmanager::vQP** vqp, void* addr, int thread_id) {
         // }
         // if(thread_id == 0)
         //     printf("%lu QP, %lu\n", (i+1) * 64 , total_time/thread_num);    
-    }
+    // }
     return;
 }
 
@@ -222,6 +221,7 @@ int main(int argc, char* argv[]) {
     std::vector<PigeonDevice> named_device_list = {{"mlx5_0", "10.10.1.3", "enp4s0"}, {"mlx5_1", "10.10.1.4", "enp5s0"}};
     system("ip link set enp4s0 up");
     system("ip link set enp5s0 up");
+    sleep(3);
     // std::vector<PigeonDevice> named_device_list = {{"mlx5_5", "10.10.1.4"}};
     // std::vector<PigeonDevice> named_device_list = {{"mlx5_7", "10.10.1.13"}, {"mlx5_4", "10.10.1.10"}};
     // std::vector<PigeonDevice> named_device_list = {{"mlx5_2", "10.10.1.1"}};
@@ -231,7 +231,7 @@ int main(int argc, char* argv[]) {
     
     // 创建vQP实例
     rdmanager::vQP* vqp_list[128];
-    rdmanager::vQP* vqp_cache[4096];
+    rdmanager::vQP* vqp_cache[128];
     for(int i = 0;i < thread_num;i ++){
         // 创建虚拟上下文，注册内存，建立连接
         rdmanager::vContext* vcontext = new rdmanager::vContext(&skip_device_list, &named_device_list);
@@ -250,11 +250,12 @@ int main(int argc, char* argv[]) {
     
     // create vQP cache for test
     if(bench_type != "switch"){
-        for(int i = 0; i < 4096; i ++) {
+        for(int i = 0; i < 128; i ++) {
             rdmanager::vContext* vcontext = new rdmanager::vContext(&skip_device_list, &named_device_list);
             vcontext->memory_register(addr, page_size);
             if(i == 0 ){
                 vcontext->create_RPC("10.10.1.2", "1145");
+                vcontext->total_failure = 1;
             }
             vcontext->create_connecter("10.10.1.2", "1145");
             rdmanager::vQP* vqp = new rdmanager::vQP(vcontext);
