@@ -93,10 +93,12 @@ void PigeonContext::PigeonConnect(const std::string ip, const std::string port, 
     conn_param.private_data_len = sizeof(CNodeInit);
     conn_param.retry_count = 7;
     conn_param.rnr_retry_count = 7;
-    result = rdma_connect(cm_id_, &conn_param);
-    assert(result == 0);
-    rdma_get_cm_event(channel_, &event);
-    assert(event->event == RDMA_CM_EVENT_ESTABLISHED);
+    while(event->event != RDMA_CM_EVENT_ESTABLISHED){
+        result = rdma_connect(cm_id_, &conn_param);
+        rdma_get_cm_event(channel_, &event);
+    }
+    // assert(result == 0);
+    // assert(event->event == RDMA_CM_EVENT_ESTABLISHED);
     
     struct PData server_pdata;
     memcpy(&server_pdata, event->param.conn.private_data, sizeof(server_pdata));

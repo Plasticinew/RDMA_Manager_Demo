@@ -121,14 +121,13 @@ void do_mr_cache_test(rdmanager::vQP** vqp, void* addr, int thread_id) {
 
 void do_qp_cache_test(rdmanager::vQP** vqp, void* addr, int thread_id) {
     if(thread_id ==0)
-        vqp[0]->alloc_RPC(&remote_addr[0], &rkey[0], page_size*1024*1024*16);
+        vqp[0]->alloc_RPC(&remote_addr[0], &rkey[0], page_size*1024*1024);
     auto start_time = TIME_NOW;
     auto start_time_global = TIME_NOW;
     printf("%lu\n", TIME_NOW);
     uint64_t read_items = 1024*1024;
     std::random_device r;
     std::mt19937 rand_val(r());
-    int index = 0;
     pthread_barrier_wait(&barrier_start);
     // start_time_global = TIME_NOW;
     // for(int i = 0; i < 16; i ++){
@@ -136,9 +135,9 @@ void do_qp_cache_test(rdmanager::vQP** vqp, void* addr, int thread_id) {
         pthread_barrier_wait(&barrier_start);
         // start_time_global = TIME_NOW;
         for(uint64_t j = 0; j < read_items; j++){
-            index = rand_val()%(128);
+            index = rand_val()%(64);
             // start_time = TIME_NOW;
-            vqp[index]->read_main(addr, 1024, (void*)(remote_addr[0] + page_size*(rand_val()%(1024*128))), rkey[0]);
+            vqp[index]->write(addr, 1024, (void*)(remote_addr[0] + page_size*(rand_val()%(1024*128))), rkey[0], 0, 0);
             // printf("%lu\n", TIME_DURATION_US(start_time, TIME_NOW));
             counter.fetch_add(1);
         }
@@ -250,7 +249,7 @@ int main(int argc, char* argv[]) {
     
     // create vQP cache for test
     if(bench_type != "switch"){
-        for(int i = 0; i < 128; i ++) {
+        for(int i = 0; i < 64; i ++) {
             rdmanager::vContext* vcontext = new rdmanager::vContext(&skip_device_list, &named_device_list);
             vcontext->memory_register(addr, page_size);
             if(i == 0 ){

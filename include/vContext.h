@@ -95,7 +95,7 @@ public:
 
     void switch_pigeon() {
         context_list_[primary_index_].status_ = PIGEON_STATUS_ERROR;
-        // context_list_[primary_index_].PigeonDisconnected();
+        context_list_[primary_index_].PigeonDisconnected();
         // secondary_index_ = context_list_.size()-1;
         pigeon_swap(primary_index_, secondary_index_);
         if(!context_list_[primary_index_].connected()){
@@ -118,7 +118,7 @@ public:
     uint32_t log_rkey_persist;
 
     bool down_primary() {
-        if(total_failure > 0 && rand_val()%100000 == 1){
+        if(total_failure > 0 && rand_val()%10000 == 1){
             // downed = true;
             total_failure -= 1;
             recovery_primary = primary_index_;
