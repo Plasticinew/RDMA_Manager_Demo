@@ -57,6 +57,7 @@ ErrorType vQP::read(void* local_addr, uint64_t length, void* remote_addr, uint32
         ErrorType err = read_main(local_addr, length, remote_addr, rkey);
         if(err == SEND_ERROR){
             switch_card();
+            
             printf("change nic\n");
             // return read(local_addr, length, remote_addr, rkey, lid, dct_num);
             return NO_ERROR;

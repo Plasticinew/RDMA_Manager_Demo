@@ -33,7 +33,7 @@ double global_time[4096];
 void do_mem_cache_test(rdmanager::vQP** vqp, void* addr, int thread_id) {
     // 仅线程0分配大块远程内存
     if(thread_id == 0)
-        vqp[0]->alloc_RPC(&remote_addr[0], &rkey[0], page_size*1024*1024*16);
+        vqp[0]->alloc_RPC(&remote_addr[0], &rkey[0], page_size*1024*1024);
     auto start_time = TIME_NOW;
     printf("%lu\n", TIME_NOW);
     uint64_t read_items = 1024*1024;    // 每个线程执行1M次读操作
@@ -177,14 +177,14 @@ void do_read(rdmanager::vQP* vqp, void* addr, uint32_t rkey, uint32_t lid, uint3
 
 void do_switch(rdmanager::vQP** vqp, void* addr, uint32_t lid, uint32_t dct_num, int thread_id) {
     if(thread_id == 0)
-        vqp[0]->alloc_RPC(&remote_addr[0], &rkey[0], page_size*1024*1024*16);
+        vqp[0]->alloc_RPC(&remote_addr[0], &rkey[0], page_size*1024*1024);
     auto start_time = TIME_NOW;
     auto total_start_time = TIME_NOW;
     // system("sudo ip link set ens1f0v0 down");
     pthread_barrier_wait(&barrier_start);
     for(uint64_t i = 0; i < iter; i++){
         // start_time = TIME_NOW;
-        vqp[thread_id]->write(addr, 64, (void*)remote_addr[0], rkey[0], lid, dct_num);
+        vqp[thread_id]->write(addr, 1024, (void*)remote_addr[0], rkey[0], lid, dct_num);
         counter.fetch_add(1);
         // printf("%lu\n", TIME_DURATION_US(start_time, TIME_NOW));
     }
