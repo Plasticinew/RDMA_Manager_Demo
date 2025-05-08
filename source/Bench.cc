@@ -223,6 +223,8 @@ int main(int argc, char* argv[]) {
     std::vector<PigeonDevice> skip_device_list;
     // std::vector<PigeonDevice> named_device_list = {{"mlx5_4", "10.10.1.14"}, {"mlx5_7", "10.10.1.17"}};
     std::vector<PigeonDevice> named_device_list = {{"mlx5_0", "10.10.1.3", "enp4s0"}, {"mlx5_1", "10.10.1.4", "enp5s0"}};
+    system("ip link set enp4s0 up");
+    system("ip link set enp5s0 up");
     // std::vector<PigeonDevice> named_device_list = {{"mlx5_5", "10.10.1.4"}};
     // std::vector<PigeonDevice> named_device_list = {{"mlx5_7", "10.10.1.13"}, {"mlx5_4", "10.10.1.10"}};
     // std::vector<PigeonDevice> named_device_list = {{"mlx5_2", "10.10.1.1"}};

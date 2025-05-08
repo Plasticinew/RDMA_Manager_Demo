@@ -37,13 +37,14 @@ void PigeonContext::PigeonConnect(const std::string ip, const std::string port, 
 
 
     addrinfo *t = NULL;
-    while(t!=NULL) {
+    while( t == NULL ) {
         for(t = res; t; t = t->ai_next) {
             if(!rdma_resolve_addr(cm_id_, (struct sockaddr *)&src_addr, t->ai_addr, RESOLVE_TIMEOUT_MS)) {
                 break;
             }
         }
-        printf("I cannot find\n");
+        if(t == NULL)
+            printf("I cannot find\n");
     }
     // assert(t != NULL);
 
