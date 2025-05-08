@@ -8,7 +8,7 @@
 
 const uint64_t page_size = 1024*4;
 
-const int qp_num = 64;
+const int qp_num = 128;
 
 // 读写的次数
 const uint64_t iter = 1000000;

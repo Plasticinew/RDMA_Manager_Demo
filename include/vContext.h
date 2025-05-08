@@ -8,8 +8,11 @@
 #include <cstdlib>
 #include <random>
 #include <unistd.h>
+#include <mutex>
 
 namespace rdmanager{
+
+std::mutex m_mutex_;
 
 static std::map<std::string, DynamicContext*> r_context;
 static std::map<std::string, DynamicContext*> s_context;
@@ -94,6 +97,7 @@ public:
     }
 
     void switch_pigeon() {
+        std::unique_lock<std::mutex> lock(m_mutex_);
         context_list_[primary_index_].status_ = PIGEON_STATUS_ERROR;
         // context_list_[primary_index_].PigeonDisconnected();
         // secondary_index_ = context_list_.size()-1;
@@ -101,6 +105,7 @@ public:
         if(!context_list_[primary_index_].connected()){
             create_connecter(ip_, port_);
         }
+        lock.unlock();
     }
 
     bool connected() {

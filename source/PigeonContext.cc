@@ -44,8 +44,8 @@ void PigeonContext::PigeonConnect(const std::string ip, const std::string port, 
                 break;
             }
         }
-        // if(t == NULL)
-            // printf("I cannot find\n");
+        if(t == NULL)
+            printf("I cannot find\n");
     }
     // assert(t != NULL);
 
