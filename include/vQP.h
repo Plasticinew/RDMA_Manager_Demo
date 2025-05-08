@@ -40,8 +40,8 @@ struct WRBuffer {
     int alloc_RPC(uint64_t* addr, uint32_t* rkey, uint64_t size);
 
     void switch_card() {
-        // context_->switch_pigeon();
-        std::thread* listen_thread = new std::thread(&vContext::switch_pigeon, context_);
+        context_->switch_pigeon();
+        std::thread* listen_thread = new std::thread(&vContext::new_connect, context_);
     }
 
     void recovery(void* local_addr, uint64_t length, uint32_t lid, uint32_t dct_num);

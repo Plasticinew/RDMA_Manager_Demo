@@ -101,6 +101,11 @@ public:
         // context_list_[primary_index_].PigeonDisconnected();
         // secondary_index_ = context_list_.size()-1;
         pigeon_swap(primary_index_, secondary_index_);
+        
+        // lock.unlock();
+    }
+
+    void new_connect() {
         retry:
         std::unique_lock<std::mutex> lock(m_mutex_);
         if(!context_list_[primary_index_].connected()){
@@ -110,9 +115,8 @@ public:
                 goto retry;
             }
         }
-        // lock.unlock();
     }
-
+    
     bool connected() {
         return context_list_[primary_index_].connected();
     }
