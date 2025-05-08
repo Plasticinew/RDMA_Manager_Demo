@@ -95,7 +95,7 @@ public:
 
     void switch_pigeon() {
         context_list_[primary_index_].status_ = PIGEON_STATUS_ERROR;
-        context_list_[primary_index_].PigeonDisconnected();
+        // context_list_[primary_index_].PigeonDisconnected();
         // secondary_index_ = context_list_.size()-1;
         pigeon_swap(primary_index_, secondary_index_);
         if(!context_list_[primary_index_].connected()){

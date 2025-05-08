@@ -8,6 +8,8 @@
 
 const uint64_t page_size = 1024*4;
 
+const int qp_num = 64;
+
 // 读写的次数
 const uint64_t iter = 1000000;
 
@@ -135,9 +137,9 @@ void do_qp_cache_test(rdmanager::vQP** vqp, void* addr, int thread_id) {
         pthread_barrier_wait(&barrier_start);
         // start_time_global = TIME_NOW;
         for(uint64_t j = 0; j < read_items; j++){
-            index = rand_val()%(64);
+            index = thread_id*qp_num/thread_num + rand_val()%(qp_num/thread_num);
             // start_time = TIME_NOW;
-            vqp[index]->write(addr, 1024, (void*)(remote_addr[0] + page_size*(rand_val()%(1024*128))), rkey[0], 0, 0);
+            vqp[index]->write(addr, 1024, (void*)(remote_addr[0]), rkey[0], 0, 0);
             // printf("%lu\n", TIME_DURATION_US(start_time, TIME_NOW));
             counter.fetch_add(1);
         }
@@ -249,7 +251,7 @@ int main(int argc, char* argv[]) {
     
     // create vQP cache for test
     if(bench_type != "switch"){
-        for(int i = 0; i < 64; i ++) {
+        for(int i = 0; i < qp_num; i ++) {
             rdmanager::vContext* vcontext = new rdmanager::vContext(&skip_device_list, &named_device_list);
             vcontext->memory_register(addr, page_size);
             if(i == 0 ){
