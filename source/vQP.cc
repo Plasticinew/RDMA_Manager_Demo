@@ -46,7 +46,7 @@ void vQP::recovery(void* local_addr, uint64_t length, uint32_t lid, uint32_t dct
         }
     }
     // context_->up_primary();
-    downed = false;
+    // downed = false;
 }
 
 ErrorType vQP::read(void* local_addr, uint64_t length, void* remote_addr, uint32_t rkey, uint32_t lid, uint32_t dct_num) {
