@@ -38,7 +38,7 @@ bool PigeonContext::PigeonConnect(const std::string ip, const std::string port, 
         memset(&src_addr, 0, sizeof(src_addr));
         src_addr.sin_family = AF_INET;
         inet_pton(AF_INET, device_.ip.c_str(), &src_addr.sin_addr); // 本地网卡IP地址
-        src_addr.sin_port = htons(1145);
+        src_addr.sin_port = htons(device_.port);
         
         for(t = res; t; t = t->ai_next) {
             if(!rdma_resolve_addr(cm_id_, (struct sockaddr *)&src_addr, t->ai_addr, RESOLVE_TIMEOUT_MS)) {
