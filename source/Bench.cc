@@ -186,6 +186,7 @@ void do_switch(rdmanager::vQP** vqp, void* addr, uint32_t lid, uint32_t dct_num,
         vqp[0]->alloc_RPC(&remote_addr[0], &rkey[0], page_size*1024*1024);
         result.open("result_lat.csv");
     }
+    double max_lat = 0;
     auto start_time = TIME_NOW;
     auto total_start_time = TIME_NOW;
     auto start_time_global = TIME_NOW;
@@ -196,8 +197,12 @@ void do_switch(rdmanager::vQP** vqp, void* addr, uint32_t lid, uint32_t dct_num,
         start_time = TIME_NOW;
         vqp[thread_id]->write(addr, 1024, (void*)remote_addr[0], rkey[0], lid, dct_num);
         counter.fetch_add(1);
+        double slice = TIME_DURATION_US(start_time, TIME_NOW);
         if(thread_id == 0) {
-            result << TIME_DURATION_US(start_time, TIME_NOW) << std::endl;
+            result << slice << std::endl;
+        }
+        if(slice > max_lat){
+            max_lat = slice;
         }
         // printf("%lu\n", TIME_DURATION_US(start_time, TIME_NOW));
     }
@@ -206,8 +211,9 @@ void do_switch(rdmanager::vQP** vqp, void* addr, uint32_t lid, uint32_t dct_num,
     for(int k = 0; k < thread_num; k++){
         total_time += global_time[k]/iter;
     }
+    printf("max lat %lf\n", max_lat);    
     if(thread_id == 0)
-        printf("lat %lu\n", total_time/thread_num);    
+        printf("total_avg lat %lf\n", total_time/thread_num);    
     // pthread_barrier_wait(&barrier_start);
     // printf("%lu\n", TIME_DURATION_US(total_start_time, TIME_NOW)/(iter/2));
     // // vqp[thread_id]->switch_card();

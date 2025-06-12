@@ -23,7 +23,7 @@ public:
     uint64_t gid1, gid2, interface, subnet;
     uint16_t lid_;
     uint32_t dct_num_;
-    int total_failure = 0;
+    int total_failure = 1;
 
     vContext(std::vector<PigeonDevice> *skip_device_list, std::vector<PigeonDevice> *named_device_list) ;
 
