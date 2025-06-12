@@ -3,6 +3,7 @@
 #include <atomic>   // 原子操作支持
 #include <unistd.h> // usleep
 #include <random>   // 随机数生成
+#include <fstream>
 
 // 用于测试片上竞争的bench client
 
@@ -122,8 +123,8 @@ void do_mr_cache_test(rdmanager::vQP** vqp, void* addr, int thread_id) {
  */
 
 void do_qp_cache_test(rdmanager::vQP** vqp, void* addr, int thread_id) {
+    std::ofstream result;
     if(thread_id == 0) {
-        std::ofstream result;
         result.open("result_lat.csv");
     }
     if(thread_id ==0)
@@ -157,7 +158,7 @@ void do_qp_cache_test(rdmanager::vQP** vqp, void* addr, int thread_id) {
             total_time += global_time[k]/read_items;
         }
         if(thread_id == 0)
-            printf("%lu QP, %lu\n", (i+1) * 64 , total_time/thread_num);    
+            printf("lat %lu\n", total_time/thread_num);    
     // }
     return;
 }
@@ -180,13 +181,14 @@ void do_read(rdmanager::vQP* vqp, void* addr, uint32_t rkey, uint32_t lid, uint3
 }
 
 void do_switch(rdmanager::vQP** vqp, void* addr, uint32_t lid, uint32_t dct_num, int thread_id) {
+    std::ofstream result;
     if(thread_id == 0){
         vqp[0]->alloc_RPC(&remote_addr[0], &rkey[0], page_size*1024*1024);
-        std::ofstream result;
         result.open("result_lat.csv");
     }
     auto start_time = TIME_NOW;
     auto total_start_time = TIME_NOW;
+    auto start_time_global = TIME_NOW;
     // system("sudo ip link set ens1f0v0 down");
     pthread_barrier_wait(&barrier_start);
     start_time_global = TIME_NOW;
@@ -202,10 +204,10 @@ void do_switch(rdmanager::vQP** vqp, void* addr, uint32_t lid, uint32_t dct_num,
     global_time[thread_id] = TIME_DURATION_US(start_time_global, TIME_NOW);
     double total_time = 0;
     for(int k = 0; k < thread_num; k++){
-        total_time += global_time[k]/read_items;
+        total_time += global_time[k]/iter;
     }
     if(thread_id == 0)
-        printf("%lu QP, %lu\n", (i+1) * 64 , total_time/thread_num);    
+        printf("lat %lu\n", total_time/thread_num);    
     // pthread_barrier_wait(&barrier_start);
     // printf("%lu\n", TIME_DURATION_US(total_start_time, TIME_NOW)/(iter/2));
     // // vqp[thread_id]->switch_card();
