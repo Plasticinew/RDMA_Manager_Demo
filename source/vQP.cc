@@ -209,7 +209,7 @@ ErrorType vQP::write_main(void* local_addr, uint64_t length, void* remote_addr, 
     if(!downed && context_->down_primary() && TIME_DURATION_US(last_time, TIME_NOW) > 10000000){
         last_time = TIME_NOW;
         downed = true;
-        // printf("down before write\n");
+        printf("down before write\n");
     }
     ibv_qp* qp = context_->get_qp();
     if (ibv_post_send(qp, &send_wr, &bad_send_wr)) {
@@ -219,7 +219,7 @@ ErrorType vQP::write_main(void* local_addr, uint64_t length, void* remote_addr, 
     if(!downed && context_->down_primary() && TIME_DURATION_US(last_time, TIME_NOW) > 10000000){
         last_time = TIME_NOW;
         downed = true;
-        // printf("down after write\n");
+        printf("down after write\n");
     }
     work_queue_[work_queue_finished_].wr_timestamp_ = time_stamp;
     work_queue_[work_queue_finished_].wr_local_addr_ = (uint64_t)local_addr;
