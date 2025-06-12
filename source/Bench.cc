@@ -122,6 +122,10 @@ void do_mr_cache_test(rdmanager::vQP** vqp, void* addr, int thread_id) {
  */
 
 void do_qp_cache_test(rdmanager::vQP** vqp, void* addr, int thread_id) {
+    if(thread_id == 0) {
+        std::ofstream result;
+        result.open("result_lat.csv");
+    }
     if(thread_id ==0)
         vqp[0]->alloc_RPC(&remote_addr[0], &rkey[0], page_size*1024*1024);
     auto start_time = TIME_NOW;
@@ -135,22 +139,25 @@ void do_qp_cache_test(rdmanager::vQP** vqp, void* addr, int thread_id) {
     // for(int i = 0; i < 16; i ++){
         int index = 0;
         pthread_barrier_wait(&barrier_start);
-        // start_time_global = TIME_NOW;
+        start_time_global = TIME_NOW;
         for(uint64_t j = 0; j < read_items; j++){
             index = thread_id*qp_num/thread_num + rand_val()%(qp_num/thread_num);
-            // start_time = TIME_NOW;
+            start_time = TIME_NOW;
             vqp[index]->write(addr, 1024, (void*)(remote_addr[0]), rkey[0], 0, 0);
+            if(thread_id == 0) {
+                result << TIME_DURATION_US(start_time, TIME_NOW) << std::endl;
+            }
             // printf("%lu\n", TIME_DURATION_US(start_time, TIME_NOW));
             counter.fetch_add(1);
         }
 
-        // global_time[thread_id] = TIME_DURATION_US(start_time_global, TIME_NOW);
-        // double total_time = 0;
-        // for(int k = 0; k < thread_num; k++){
-        //     total_time += global_time[k]/read_items;
-        // }
-        // if(thread_id == 0)
-        //     printf("%lu QP, %lu\n", (i+1) * 64 , total_time/thread_num);    
+        global_time[thread_id] = TIME_DURATION_US(start_time_global, TIME_NOW);
+        double total_time = 0;
+        for(int k = 0; k < thread_num; k++){
+            total_time += global_time[k]/read_items;
+        }
+        if(thread_id == 0)
+            printf("%lu QP, %lu\n", (i+1) * 64 , total_time/thread_num);    
     // }
     return;
 }
@@ -173,18 +180,32 @@ void do_read(rdmanager::vQP* vqp, void* addr, uint32_t rkey, uint32_t lid, uint3
 }
 
 void do_switch(rdmanager::vQP** vqp, void* addr, uint32_t lid, uint32_t dct_num, int thread_id) {
-    if(thread_id == 0)
+    if(thread_id == 0){
         vqp[0]->alloc_RPC(&remote_addr[0], &rkey[0], page_size*1024*1024);
+        std::ofstream result;
+        result.open("result_lat.csv");
+    }
     auto start_time = TIME_NOW;
     auto total_start_time = TIME_NOW;
     // system("sudo ip link set ens1f0v0 down");
     pthread_barrier_wait(&barrier_start);
+    start_time_global = TIME_NOW;
     for(uint64_t i = 0; i < iter; i++){
-        // start_time = TIME_NOW;
+        start_time = TIME_NOW;
         vqp[thread_id]->write(addr, 1024, (void*)remote_addr[0], rkey[0], lid, dct_num);
         counter.fetch_add(1);
+        if(thread_id == 0) {
+            result << TIME_DURATION_US(start_time, TIME_NOW) << std::endl;
+        }
         // printf("%lu\n", TIME_DURATION_US(start_time, TIME_NOW));
     }
+    global_time[thread_id] = TIME_DURATION_US(start_time_global, TIME_NOW);
+    double total_time = 0;
+    for(int k = 0; k < thread_num; k++){
+        total_time += global_time[k]/read_items;
+    }
+    if(thread_id == 0)
+        printf("%lu QP, %lu\n", (i+1) * 64 , total_time/thread_num);    
     // pthread_barrier_wait(&barrier_start);
     // printf("%lu\n", TIME_DURATION_US(total_start_time, TIME_NOW)/(iter/2));
     // // vqp[thread_id]->switch_card();
