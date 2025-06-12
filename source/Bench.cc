@@ -268,10 +268,13 @@ int main(int argc, char* argv[]) {
         vcontext->memory_register(addr, page_size);
         vcontext->create_RPC("10.10.1.2", "1145");
         vcontext->create_connecter("10.10.1.2", "1145");
+        rdmanager::vQP* vqp;
         if(i == 0){
             vcontext->total_failure = 1;
+            vqp = new rdmanager::vQP(vcontext, false);
+        } else {
+            vqp = new rdmanager::vQP(vcontext, true);
         }
-        rdmanager::vQP* vqp = new rdmanager::vQP(vcontext);
         vqp_list[i] = vqp;
         printf("%u %lu %lu %lu %lu %u %u\n", &rkey, vcontext->gid1, vcontext->gid2, 
                                             vcontext->interface, vcontext->subnet,
@@ -288,7 +291,7 @@ int main(int argc, char* argv[]) {
                 vcontext->total_failure = 1;
             }
             vcontext->create_connecter("10.10.1.2", "1145");
-            rdmanager::vQP* vqp = new rdmanager::vQP(vcontext);
+            rdmanager::vQP* vqp = new rdmanager::vQP(vcontext, true);
             vqp_cache[i] = vqp;
             // printf("%d success\n", i);
             printf("%u %lu %lu %lu %lu %u %u\n", &rkey, vcontext->gid1, vcontext->gid2, 

@@ -13,6 +13,6 @@ int main() {
     vcontext->memory_register((void*)addr, size);
     vcontext->create_listener("1145");
     vcontext->memory_bind((void*)addr, size);
-    rdmanager::vQP* vqp = new rdmanager::vQP(vcontext);
+    rdmanager::vQP* vqp = new rdmanager::vQP(vcontext, true);
     getchar();
 }

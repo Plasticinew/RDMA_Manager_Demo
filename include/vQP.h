@@ -18,8 +18,9 @@ struct WRBuffer {
     OpType wr_optype_;
 }; 
 
-    vQP(vContext* context) {
+    vQP(vContext* context, bool disable_down) {
         context_ = context;
+        downed = disable_down;
     };
 
     // The method for vQP read

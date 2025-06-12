@@ -181,7 +181,7 @@ int main() {
         vcontext->memory_register(addr, page_size);
         vcontext->create_RPC("10.10.1.1", "1145");
         vcontext->create_connecter("10.10.1.1", "1145");
-        rdmanager::vQP* vqp = new rdmanager::vQP(vcontext);
+        rdmanager::vQP* vqp = new rdmanager::vQP(vcontext, true);
         vqp_list[i] = vqp;
     }
     
@@ -193,7 +193,7 @@ int main() {
             vcontext->create_RPC("10.10.1.1", "1145");
         }
         vcontext->create_connecter("10.10.1.1", "1145");
-        rdmanager::vQP* vqp = new rdmanager::vQP(vcontext);
+        rdmanager::vQP* vqp = new rdmanager::vQP(vcontext, true);
         vqp_cache[i] = vqp;
         printf("%d success\n", i);
     }
