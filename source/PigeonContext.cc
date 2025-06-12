@@ -2,9 +2,13 @@
 #include "PigeonCommon.h"
 #include "PigeonContext.h"
 #include "Msg.h"
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/socket.h>
 
 namespace rdmanager{
 
+    
 PigeonContext::PigeonContext(ibv_context* context, PigeonDevice device) {
     context_ = context;
     pd_ = ibv_alloc_pd(context_);
@@ -38,7 +42,7 @@ bool PigeonContext::PigeonConnect(const std::string ip, const std::string port, 
         memset(&src_addr, 0, sizeof(src_addr));
         src_addr.sin_family = AF_INET;
         inet_pton(AF_INET, device_.ip.c_str(), &src_addr.sin_addr); // 本地网卡IP地址
-        src_addr.sin_port = htons(device_.port);
+        // src_addr.sin_port = htons(new_port);
         result = rdma_bind_addr(cm_id_, (struct sockaddr *)&src_addr);
         assert(result == 0);
         
