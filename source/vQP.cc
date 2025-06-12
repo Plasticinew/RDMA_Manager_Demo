@@ -51,7 +51,7 @@ void vQP::recovery(void* local_addr, uint64_t length, uint32_t lid, uint32_t dct
 
 ErrorType vQP::read(void* local_addr, uint64_t length, void* remote_addr, uint32_t rkey, uint32_t lid, uint32_t dct_num) {
     // 注释掉的语句目的在于将RCQP创建连接的过程设置为同步行为，即不使用DCQP过渡
-    // while(!context_->connected());
+    while(!context_->connected());
     // 确认当前RCQP是否创建成功以及可用
     if(context_->connected()){
         ErrorType err = read_main(local_addr, length, remote_addr, rkey);
