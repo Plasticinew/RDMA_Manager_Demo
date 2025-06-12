@@ -34,9 +34,9 @@ bool PigeonContext::PigeonConnect(const std::string ip, const std::string port, 
     addrinfo *t = NULL;
     addrinfo *res;
     while( t == NULL ) {
-        result=0;
-        while(result != 0)
-            result = getaddrinfo(ip.c_str(), port.c_str(), NULL, &res);
+        // result=0;
+        // while(result != 0)
+        result = getaddrinfo(ip.c_str(), port.c_str(), NULL, &res);
         assert(result == 0);
     
         struct sockaddr_in src_addr;   // 设置源地址（指定网卡设备）
