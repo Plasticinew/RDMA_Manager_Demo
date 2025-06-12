@@ -30,7 +30,7 @@ PigeonContext::PigeonContext(ibv_context* context, PigeonDevice device) {
 
 bool PigeonContext::PigeonConnect(const std::string ip, const std::string port, uint8_t access_type, uint16_t node) {
 
-    int result;
+    int result=0;
     addrinfo *t = NULL;
     addrinfo *res;
     while( t == NULL ) {
