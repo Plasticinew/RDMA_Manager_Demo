@@ -29,9 +29,9 @@ bool PigeonContext::PigeonConnect(const std::string ip, const std::string port, 
     int result;
     addrinfo *t = NULL;
     addrinfo *res;
-    // while( t == NULL ) {
-        // while(result != 0)
-        result = getaddrinfo(ip.c_str(), port.c_str(), NULL, &res);
+    while( t == NULL ) {
+        while(result != 0)
+            result = getaddrinfo(ip.c_str(), port.c_str(), NULL, &res);
         assert(result == 0);
     
         struct sockaddr_in src_addr;   // 设置源地址（指定网卡设备）
@@ -48,7 +48,7 @@ bool PigeonContext::PigeonConnect(const std::string ip, const std::string port, 
             printf("I cannot find\n");
             return false;
         }
-    // }
+    }
     // assert(t != NULL);
 
     rdma_cm_event* event;
