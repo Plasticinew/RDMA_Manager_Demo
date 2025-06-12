@@ -105,7 +105,7 @@ private:
     rdma_event_channel* channel_;
     rdma_cm_id* cm_id_;
     ibv_cq* cq_;
-    uint32_t worker_num_;
+    uint32_t worker_num_ = 0;
     WorkerInfo** worker_info_;
     std::thread **worker_threads_;
     bool stop_;
