@@ -15,7 +15,7 @@ namespace rdmanager {
 #define MAX_SERVER_WORKER 1
 #define MAX_SERVER_CLIENT 4096
 #define RESOLVE_TIMEOUT_MS 5000
-#define RDMA_TIMEOUT_US (uint64_t)10000  // 10s
+#define RDMA_TIMEOUT_US (uint64_t)20000  // 10s
 #define MAX_REMOTE_SIZE (1UL << 25)
 
 #define TIME_NOW (std::chrono::high_resolution_clock::now())
