@@ -45,10 +45,10 @@ bool PigeonContext::PigeonConnect(const std::string ip, const std::string port, 
         inet_pton(AF_INET, device_.ip.c_str(), &src_addr.sin_addr); // 本地网卡IP地址
         // src_addr.sin_port = htons(new_port);
         result = rdma_bind_addr(cm_id_, (struct sockaddr *)&src_addr);
-        while(result != 0){
-            printf("retry\n");
-            result = rdma_bind_addr(cm_id_, (struct sockaddr *)&src_addr);
-        }
+        // while(result != 0){
+        //     printf("retry\n");
+        //     result = rdma_bind_addr(cm_id_, (struct sockaddr *)&src_addr);
+        // }
         assert(result == 0);
         
         for(t = res; t; t = t->ai_next) {
