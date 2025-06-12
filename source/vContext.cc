@@ -53,19 +53,19 @@ vContext::vContext(std::vector<PigeonDevice> *skip_device_list, std::vector<Pige
                         PigeonContext* rpc_context = new PigeonContext(device_list[i], *iter);
                         RPC_context_ = rpc_context;
                     }
-                    // if(r_context.find((*iter).name) == r_context.end()){
-                    //     r_context[(*iter).name] = new DynamicContext(device_list[i], (*iter), context.get_pd());
-                    //     // r_context[(*iter).name] = DynamicContext(device_list[i], (*iter), context.get_pd());
-                    //     r_context[(*iter).name]->DynamicListen();
-                    // }
-                    // back_context_recv_.push_back(r_context[(*iter).name]);
-                    // if(s_context.find((*iter).name) == s_context.end()){
-                    //     s_context[(*iter).name] = new DynamicContext(device_list[i], (*iter), context.get_pd());
-                    //     // r_context[(*iter).name] = DynamicContext(device_list[i], (*iter), context.get_pd());
-                    //     s_context[(*iter).name]->DynamicConnect();
-                    // }
-                    // back_context_send_.push_back(s_context[(*iter).name]);
-                    // context.SetDynamicConnection(r_context[(*iter).name]);
+                    if(r_context.find((*iter).name) == r_context.end()){
+                        r_context[(*iter).name] = new DynamicContext(device_list[i], (*iter), context.get_pd());
+                        // r_context[(*iter).name] = DynamicContext(device_list[i], (*iter), context.get_pd());
+                        r_context[(*iter).name]->DynamicListen();
+                    }
+                    back_context_recv_.push_back(r_context[(*iter).name]);
+                    if(s_context.find((*iter).name) == s_context.end()){
+                        s_context[(*iter).name] = new DynamicContext(device_list[i], (*iter), context.get_pd());
+                        // r_context[(*iter).name] = DynamicContext(device_list[i], (*iter), context.get_pd());
+                        s_context[(*iter).name]->DynamicConnect();
+                    }
+                    back_context_send_.push_back(s_context[(*iter).name]);
+                    context.SetDynamicConnection(r_context[(*iter).name]);
                     
                     // DynamicContext r_context(device_list[i], (*iter), context.get_pd());
                     // r_context.DynamicListen();
