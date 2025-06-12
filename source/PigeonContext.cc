@@ -47,8 +47,8 @@ bool PigeonContext::PigeonConnect(const std::string ip, const std::string port, 
         assert(result == 0);
         
         for(t = res; t; t = t->ai_next) {
-            // if(!rdma_resolve_addr(cm_id_, NULL, t->ai_addr, RESOLVE_TIMEOUT_MS)) {
-            if(!rdma_resolve_addr(cm_id_, (struct sockaddr *)&src_addr, t->ai_addr, RESOLVE_TIMEOUT_MS)) {
+            if(!rdma_resolve_addr(cm_id_, NULL, t->ai_addr, RESOLVE_TIMEOUT_MS)) {
+            // if(!rdma_resolve_addr(cm_id_, (struct sockaddr *)&src_addr, t->ai_addr, RESOLVE_TIMEOUT_MS)) {
                 break;
             }
         }
