@@ -34,15 +34,17 @@ bool PigeonContext::PigeonConnect(const std::string ip, const std::string port, 
             result = getaddrinfo(ip.c_str(), port.c_str(), NULL, &res);
         assert(result == 0);
     
-        // struct sockaddr_in src_addr;   // 设置源地址（指定网卡设备）
-        // memset(&src_addr, 0, sizeof(src_addr));
-        // src_addr.sin_family = AF_INET;
-        // inet_pton(AF_INET, device_.ip.c_str(), &src_addr.sin_addr); // 本地网卡IP地址
-        // src_addr.sin_port = htons(device_.port);
+        struct sockaddr_in src_addr;   // 设置源地址（指定网卡设备）
+        memset(&src_addr, 0, sizeof(src_addr));
+        src_addr.sin_family = AF_INET;
+        inet_pton(AF_INET, device_.ip.c_str(), &src_addr.sin_addr); // 本地网卡IP地址
+        src_addr.sin_port = htons(device_.port);
+        result = rdma_bind_addr(cm_id_, (struct sockaddr *)&src_addr);
+        assert(result == 0);
         
         for(t = res; t; t = t->ai_next) {
-            if(!rdma_resolve_addr(cm_id_, NULL, t->ai_addr, RESOLVE_TIMEOUT_MS)) {
-            // if(!rdma_resolve_addr(cm_id_, (struct sockaddr *)&src_addr, t->ai_addr, RESOLVE_TIMEOUT_MS)) {
+            // if(!rdma_resolve_addr(cm_id_, NULL, t->ai_addr, RESOLVE_TIMEOUT_MS)) {
+            if(!rdma_resolve_addr(cm_id_, (struct sockaddr *)&src_addr, t->ai_addr, RESOLVE_TIMEOUT_MS)) {
                 break;
             }
         }
