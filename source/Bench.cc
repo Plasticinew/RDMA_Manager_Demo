@@ -290,7 +290,7 @@ int main(int argc, char* argv[]) {
         rdmanager::vQP* vqp;
         if(i == 0){
             vcontext->total_failure = 1;
-            vqp = new rdmanager::vQP(vcontext, false);
+            vqp = new rdmanager::vQP(vcontext, true);
         } else {
             vqp = new rdmanager::vQP(vcontext, true);
         }
