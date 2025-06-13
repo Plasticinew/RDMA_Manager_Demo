@@ -312,7 +312,7 @@ int main(int argc, char* argv[]) {
             vcontext->create_connecter("10.10.1.2", "1145");
             rdmanager::vQP* vqp;
             if(i == 0) {
-                vqp = new rdmanager::vQP(vcontext, false);
+                vqp = new rdmanager::vQP(vcontext, true);
             } else {
                 vqp = new rdmanager::vQP(vcontext, true);
             }
