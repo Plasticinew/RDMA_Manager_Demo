@@ -51,7 +51,7 @@ void vQP::recovery(void* local_addr, uint64_t length, uint32_t lid, uint32_t dct
 
 ErrorType vQP::read(void* local_addr, uint64_t length, void* remote_addr, uint32_t rkey, uint32_t lid, uint32_t dct_num) {
     // 注释掉的语句目的在于将RCQP创建连接的过程设置为同步行为，即不使用DCQP过渡
-    while(!context_->connected());
+    // while(!context_->connected());
     // 确认当前RCQP是否创建成功以及可用
     if(context_->connected()){
         ErrorType err = read_main(local_addr, length, remote_addr, rkey);
@@ -77,6 +77,7 @@ ErrorType vQP::read(void* local_addr, uint64_t length, void* remote_addr, uint32
 }
 
 ErrorType vQP::write(void* local_addr, uint64_t length, void* remote_addr, uint32_t rkey, uint32_t lid, uint32_t dct_num) {
+    while(!context_->connected());
     if(context_->connected()){
         ErrorType err = write_main(local_addr, length, remote_addr, rkey);
         if(err == SEND_ERROR){
@@ -206,7 +207,7 @@ ErrorType vQP::write_main(void* local_addr, uint64_t length, void* remote_addr, 
         send_wr.send_flags = IBV_SEND_SIGNALED;
     send_wr.wr.rdma.remote_addr = (uint64_t)remote_addr;
     send_wr.wr.rdma.rkey = rkey;
-    if(!downed && context_->down_primary() && TIME_DURATION_US(last_time, TIME_NOW) > 10000000){
+    if(!downed && context_->down_primary() && TIME_DURATION_US(last_time, TIME_NOW) > 1000000){
         last_time = TIME_NOW;
         downed = true;
         printf("down before write\n");
@@ -216,7 +217,7 @@ ErrorType vQP::write_main(void* local_addr, uint64_t length, void* remote_addr, 
         perror("Error, ibv_post_send failed");
         return SEND_ERROR;
     }
-    if(!downed && context_->down_primary() && TIME_DURATION_US(last_time, TIME_NOW) > 10000000){
+    if(!downed && context_->down_primary() && TIME_DURATION_US(last_time, TIME_NOW) > 1000000){
         last_time = TIME_NOW;
         downed = true;
         printf("down after write\n");

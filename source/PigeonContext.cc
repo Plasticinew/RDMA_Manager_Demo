@@ -13,7 +13,7 @@ PigeonContext::PigeonContext(ibv_context* context, PigeonDevice device) {
     context_ = context;
     pd_ = ibv_alloc_pd(context_);
     channel_ = rdma_create_event_channel();
-    int result = rdma_create_id(channel_, &cm_id_, NULL, RDMA_PS_TCP);
+    int result = rdma_create_id(channel_, &cm_id_, context_, RDMA_PS_TCP);
     status_ = PigeonStatus::PIGEON_STATUS_INIT;
     device_ = device;
     worker_info_ = new WorkerInfo *[MAX_SERVER_WORKER*MAX_SERVER_CLIENT];
@@ -31,31 +31,36 @@ PigeonContext::PigeonContext(ibv_context* context, PigeonDevice device) {
 bool PigeonContext::PigeonConnect(const std::string ip, const std::string port, uint8_t access_type, uint16_t node) {
 
     int result=0;
-    addrinfo *t = NULL;
-    addrinfo *res;
+    rdma_addrinfo *t = NULL, *s = NULL;
+    rdma_addrinfo *res, *src;
     while( t == NULL ) {
         // result=0;
         // while(result != 0)
-        result = getaddrinfo(ip.c_str(), port.c_str(), NULL, &res);
-        assert(result == 0);
-    
         struct sockaddr_in src_addr;   // 设置源地址（指定网卡设备）
         memset(&src_addr, 0, sizeof(src_addr));
         src_addr.sin_family = AF_INET;
+        // src_addr.sin_port = htons(1145);
         inet_pton(AF_INET, device_.ip.c_str(), &src_addr.sin_addr); // 本地网卡IP地址
-        // src_addr.sin_port = htons(new_port);
-        result = rdma_bind_addr(cm_id_, (struct sockaddr *)&src_addr);
+        
+        result = rdma_getaddrinfo(ip.c_str(), port.c_str(), NULL, &res);
+        assert(result == 0);
+    
+        // src_addr.sin_port = htonsnew_port);
+        // result = rdma_bind_addr(cm_id_, (struct sockaddr *)&src_addr);
         // while(result != 0){
         //     printf("retry\n");
         //     result = rdma_bind_addr(cm_id_, (struct sockaddr *)&src_addr);
         // }
-        assert(result == 0);
+        // assert(result == 0);
         
         for(t = res; t; t = t->ai_next) {
-            if(!rdma_resolve_addr(cm_id_, NULL, t->ai_addr, RESOLVE_TIMEOUT_MS)) {
-            // if(!rdma_resolve_addr(cm_id_, (struct sockaddr *)&src_addr, t->ai_addr, RESOLVE_TIMEOUT_MS)) {
+            if(!rdma_resolve_addr(cm_id_, (struct sockaddr *)&src_addr, t->ai_dst_addr, RESOLVE_TIMEOUT_MS)) {
+            // printf("%s, %s", t->ai_src_addr->sa_data, t->ai_dst_addr->sa_data);
+            // for(s = src; s; s = s->ai_next){
+                // if(!rdma_resolve_addr(cm_id_, NULL, t->ai_dst_addr, RESOLVE_TIMEOUT_MS)) {
                 break;
             }
+            // }
         }
         if(t == NULL){
             printf("I cannot find\n");
@@ -158,7 +163,7 @@ bool PigeonContext::PigeonConnect(const std::string ip, const std::string port, 
 
     rdma_ack_cm_event(event);
 
-    freeaddrinfo(res);
+    rdma_freeaddrinfo(res);
 
     // Connect finished
     cq_ = cq;

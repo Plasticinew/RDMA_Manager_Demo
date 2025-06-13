@@ -12,7 +12,7 @@ const uint64_t page_size = 1024*4;
 const int qp_num = 128;
 
 // 读写的次数
-const uint64_t iter = 100000;
+const uint64_t iter = 1000000;
 
 // 线程数
 uint64_t thread_num = 4;
@@ -199,10 +199,10 @@ void do_switch(rdmanager::vQP** vqp, void* addr, uint32_t lid, uint32_t dct_num,
     for(uint64_t i = 0; i < iter; i++){
         index = thread_id*qp_num/thread_num + rand_val()%(qp_num/thread_num);
         start_time = TIME_NOW;
-        if(rand_val()%4==0)
-            vqp[index]->write(addr, 128, (void*)remote_addr[0], rkey[0], lid, dct_num);
-        else
-            vqp[index]->read(addr, 128, (void*)remote_addr[0], rkey[0], lid, dct_num);
+        // if(rand_val()%4==0)
+            vqp[index]->write(addr, 1024, (void*)remote_addr[0], rkey[0], lid, dct_num);
+        // else
+            // vqp[index]->read(addr, 128, (void*)remote_addr[0], rkey[0], lid, dct_num);
         counter.fetch_add(1);
         double slice = TIME_DURATION_US(start_time, TIME_NOW);
         if(thread_id == 0) {
@@ -255,9 +255,12 @@ int main(int argc, char* argv[]) {
 
     std::vector<PigeonDevice> skip_device_list;
     // std::vector<PigeonDevice> named_device_list = {{"mlx5_4", "10.10.1.14"}, {"mlx5_7", "10.10.1.17"}};
+    // std::vector<PigeonDevice> named_device_list = {{"mlx5_6", "10.10.1.5", "ens3f0v2", 1145}, {"mlx5_7", "10.10.1.6", "ens3f0v3", 1146}};
     std::vector<PigeonDevice> named_device_list = {{"mlx5_0", "10.10.1.3", "enp4s0", 1145}, {"mlx5_1", "10.10.1.4", "enp5s0", 1146}};
     system("ip link set enp4s0 up");
     system("ip link set enp5s0 up");
+    // system("ip link set ens3f0v2 up");
+    // system("ip link set ens3f0v3 up");
     sleep(3);
     // std::vector<PigeonDevice> named_device_list = {{"mlx5_5", "10.10.1.4"}};
     // std::vector<PigeonDevice> named_device_list = {{"mlx5_7", "10.10.1.13"}, {"mlx5_4", "10.10.1.10"}};
@@ -332,6 +335,10 @@ int main(int argc, char* argv[]) {
             data[i] = 0;
         }
     } else if(bench_type == "switch") {
+        // system("ip link set ens3f0v2 down");
+        // system("ip link set ens3f0v3 down");
+        system("ip link set enp4s0 up");
+        system("ip link set enp5s0 up");
         for(int i = 0;i < thread_num; i++){
             read_thread[i] = new std::thread(&do_switch, vqp_cache, addr, lid, dct, i);
         }
@@ -341,9 +348,9 @@ int main(int argc, char* argv[]) {
         long old_val, new_val;
         while(counter.load() < thread_num * iter -1){
             old_val = counter.load();
-            usleep(1000);
+            usleep(10000);
             new_val = counter.load();
-            printf("%lf\n", 1.0*(new_val-old_val)*100);
+            printf("%lf\n", 1.0*(new_val-old_val)*100*1024);
         }
     } else if(bench_type == "cache") {
         for(int i = 0; i < thread_num; i++){
