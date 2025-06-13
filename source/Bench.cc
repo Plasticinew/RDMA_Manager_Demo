@@ -13,7 +13,7 @@ const uint64_t page_size = 1024*4;
 const int qp_num = 128;
 
 // 读写的次数
-const uint64_t iter = 10000;
+const uint64_t iter = 100000;
 
 // 线程数
 uint64_t thread_num = 4;
@@ -36,7 +36,7 @@ double global_time[4096];
 
 void killer() {
     auto last_time = TIME_NOW;
-    while(TIME_DURATION_US(last_time, TIME_NOW) < 3000000){
+    while(TIME_DURATION_US(last_time, TIME_NOW) < 1000000){
     }
     system("ip link set enp4s0 down");
     printf("down!\n");

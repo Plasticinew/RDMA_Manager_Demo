@@ -77,7 +77,7 @@ ErrorType vQP::read(void* local_addr, uint64_t length, void* remote_addr, uint32
 }
 
 ErrorType vQP::write(void* local_addr, uint64_t length, void* remote_addr, uint32_t rkey, uint32_t lid, uint32_t dct_num) {
-    while(!context_->connected());
+    // while(!context_->connected());
     if(context_->connected()){
         ErrorType err = write_main(local_addr, length, remote_addr, rkey);
         if(err == SEND_ERROR){
@@ -236,7 +236,7 @@ ErrorType vQP::write_main(void* local_addr, uint64_t length, void* remote_addr, 
     ibv_cq* cq = context_->get_cq();
     while(true) {
         if(TIME_DURATION_US(start, TIME_NOW) > RDMA_TIMEOUT_US) {
-            std::cerr << "Error, write timeout" << std::endl;
+            // std::cerr << "Error, write timeout" << std::endl;
             break;
         }
         if(ibv_poll_cq(cq, 1, &wc) > 0) {

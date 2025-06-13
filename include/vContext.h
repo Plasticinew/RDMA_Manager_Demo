@@ -106,14 +106,14 @@ public:
     }
 
     void new_connect() {
-        retry:
-        std::unique_lock<std::mutex> lock(m_mutex_);
+        // retry:
+        // std::unique_lock<std::mutex> lock(m_mutex_);
         if(!context_list_[primary_index_].connected()){
-            if(!create_connecter(ip_, port_)){
-                lock.unlock();
-                std::this_thread::yield();
-                goto retry;
-            }
+            create_connecter(ip_, port_);
+                // lock.unlock();
+                // std::this_thread::yield();
+                // goto retry;
+            
         }
     }
     
