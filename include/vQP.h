@@ -18,9 +18,9 @@ struct WRBuffer {
     OpType wr_optype_;
 }; 
 
-    vQP(vContext* context, bool disable_down) {
+    vQP(vContext* context, int* enode) {
         context_ = context;
-        downed = disable_down;
+        error_node = enode;
     };
 
     // The method for vQP read
@@ -56,6 +56,7 @@ private:
     CmdMsgBlock *read_log;
     struct ibv_mr *read_log_mr;
     bool downed = false;
+    int* error_node;
 };
 
 

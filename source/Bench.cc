@@ -277,7 +277,7 @@ int main(int argc, char* argv[]) {
     // 分配大页内存
     void* addr = mmap(0, page_size, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS|MAP_HUGETLB, -1, 0);
     memset(addr, 0, page_size);
-    
+    int enode = -1;
     // 创建vQP实例
     rdmanager::vQP* vqp_list[128];
     rdmanager::vQP* vqp_cache[128];
@@ -290,9 +290,9 @@ int main(int argc, char* argv[]) {
         rdmanager::vQP* vqp;
         if(i == 0){
             vcontext->total_failure = 1;
-            vqp = new rdmanager::vQP(vcontext, true);
+            vqp = new rdmanager::vQP(vcontext, &enode);
         } else {
-            vqp = new rdmanager::vQP(vcontext, true);
+            vqp = new rdmanager::vQP(vcontext, &enode);
         }
         vqp_list[i] = vqp;
         printf("%u %lu %lu %lu %lu %u %u\n", &rkey, vcontext->gid1, vcontext->gid2, 
@@ -312,9 +312,9 @@ int main(int argc, char* argv[]) {
             vcontext->create_connecter("10.10.1.2", "1145");
             rdmanager::vQP* vqp;
             if(i == 0) {
-                vqp = new rdmanager::vQP(vcontext, true);
+                vqp = new rdmanager::vQP(vcontext, &enode);
             } else {
-                vqp = new rdmanager::vQP(vcontext, true);
+                vqp = new rdmanager::vQP(vcontext, &enode);
             }
             vqp_cache[i] = vqp;
             // printf("%d success\n", i);

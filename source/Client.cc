@@ -176,12 +176,13 @@ int main() {
     memset(addr, 0, page_size);
     rdmanager::vQP* vqp_list[thread_num];
     rdmanager::vQP* vqp_cache[4096];
+    int enode = -1;
     for(int i = 0;i < thread_num;i ++){
         rdmanager::vContext* vcontext = new rdmanager::vContext(&skip_device_list, &named_device_list);
         vcontext->memory_register(addr, page_size);
         vcontext->create_RPC("10.10.1.1", "1145");
         vcontext->create_connecter("10.10.1.1", "1145");
-        rdmanager::vQP* vqp = new rdmanager::vQP(vcontext, true);
+        rdmanager::vQP* vqp = new rdmanager::vQP(vcontext, &enode);
         vqp_list[i] = vqp;
     }
     
@@ -193,7 +194,7 @@ int main() {
             vcontext->create_RPC("10.10.1.1", "1145");
         }
         vcontext->create_connecter("10.10.1.1", "1145");
-        rdmanager::vQP* vqp = new rdmanager::vQP(vcontext, true);
+        rdmanager::vQP* vqp = new rdmanager::vQP(vcontext, &enode);
         vqp_cache[i] = vqp;
         printf("%d success\n", i);
     }
