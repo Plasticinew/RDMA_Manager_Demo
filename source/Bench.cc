@@ -12,7 +12,7 @@ const uint64_t page_size = 1024*4;
 const int qp_num = 128;
 
 // 读写的次数
-const uint64_t iter = 10000;
+const uint64_t iter = 100000;
 
 // 线程数
 uint64_t thread_num = 4;
@@ -199,7 +199,7 @@ void do_switch(rdmanager::vQP** vqp, void* addr, uint32_t lid, uint32_t dct_num,
     for(uint64_t i = 0; i < iter; i++){
         index = thread_id*qp_num/thread_num + rand_val()%(qp_num/thread_num);
         start_time = TIME_NOW;
-        if(i%4==0)
+        if(rand_val()%4==0)
             vqp[index]->write(addr, 128, (void*)remote_addr[0], rkey[0], lid, dct_num);
         else
             vqp[index]->read(addr, 128, (void*)remote_addr[0], rkey[0], lid, dct_num);
@@ -363,9 +363,9 @@ int main(int argc, char* argv[]) {
         long old_val, new_val;
         while(counter.load() < thread_num * iter -1){
             old_val = counter.load();
-            usleep(1000);
+            usleep(10000);
             new_val = counter.load();
-            printf("%lf\n", 1.0*(new_val-old_val)*1000*page_size);
+            printf("%lf\n", 1.0*(new_val-old_val)*100);
         }
     } else if(bench_type == "exit") {
         return 0;
