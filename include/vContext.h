@@ -132,7 +132,7 @@ public:
     uint32_t log_rkey_persist;
 
     bool down_primary() {
-        if(total_failure > 0 && rand_val()%10000 == 1){
+        if(total_failure > 0 && rand_val()%1000 == 1){
             // downed = true;
             total_failure -= 1;
             recovery_primary = primary_index_;
