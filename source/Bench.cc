@@ -343,7 +343,7 @@ int main(int argc, char* argv[]) {
             old_val = counter.load();
             usleep(1000);
             new_val = counter.load();
-            printf("%lf\n", 1.0*(new_val-old_val)*1000*page_size);
+            printf("%lf\n", 1.0*(new_val-old_val)*100);
         }
     } else if(bench_type == "cache") {
         for(int i = 0; i < thread_num; i++){
