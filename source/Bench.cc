@@ -12,7 +12,7 @@ const uint64_t page_size = 1024*4;
 const int qp_num = 128;
 
 // 读写的次数
-const uint64_t iter = 1000000;
+const uint64_t iter = 10000;
 
 // 线程数
 uint64_t thread_num = 4;
@@ -337,8 +337,8 @@ int main(int argc, char* argv[]) {
     } else if(bench_type == "switch") {
         // system("ip link set ens3f0v2 down");
         // system("ip link set ens3f0v3 down");
-        system("ip link set enp4s0 up");
-        system("ip link set enp5s0 up");
+        // system("ip link set enp4s0 up");
+        // system("ip link set enp5s0 up");
         for(int i = 0;i < thread_num; i++){
             read_thread[i] = new std::thread(&do_switch, vqp_cache, addr, lid, dct, i);
         }

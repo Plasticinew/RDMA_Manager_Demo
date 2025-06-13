@@ -33,7 +33,9 @@ bool PigeonContext::PigeonConnect(const std::string ip, const std::string port, 
     int result=0;
     rdma_addrinfo *t = NULL, *s = NULL;
     rdma_addrinfo *res, *src;
-    while( t == NULL ) {
+    int counter = 0;
+    while( t == NULL && counter < 100) {
+        counter += 1;
         // result=0;
         // while(result != 0)
         struct sockaddr_in src_addr;   // 设置源地址（指定网卡设备）
@@ -62,12 +64,12 @@ bool PigeonContext::PigeonConnect(const std::string ip, const std::string port, 
             }
             // }
         }
-        if(t == NULL){
-            printf("I cannot find\n");
-            return false;
-        }
+        // if(t == NULL){
+        //     printf("I cannot find\n");
+        //     return false;
+        // }
     }
-    // assert(t != NULL);
+    assert(t != NULL);
 
     rdma_cm_event* event;
     result = rdma_get_cm_event(channel_, &event);
