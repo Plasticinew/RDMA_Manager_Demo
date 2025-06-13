@@ -333,7 +333,7 @@ int main(int argc, char* argv[]) {
         }
     } else if(bench_type == "switch") {
         for(int i = 0;i < thread_num; i++){
-            read_thread[i] = new std::thread(&do_switch, vqp_list, addr, lid, dct, i);
+            read_thread[i] = new std::thread(&do_switch, vqp_cache, addr, lid, dct, i);
         }
         // for(int i = 0; i < thread_num; i++){
         //     read_thread[i]->join();
