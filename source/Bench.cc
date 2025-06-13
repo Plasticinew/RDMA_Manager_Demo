@@ -1,5 +1,6 @@
 
 #include "vQP.h"    // vQP相关功能
+#include "Msg.h"
 #include <atomic>   // 原子操作支持
 #include <unistd.h> // usleep
 #include <random>   // 随机数生成
@@ -32,6 +33,14 @@ double global_time[4096];
  * @param addr 本地内存地址
  * @param thread_id 当前线程ID
  */
+
+void killer() {
+    auto last_time = TIME_NOW;
+    while(TIME_DURATION_US(last_time, TIME_NOW) < 3000000){
+    }
+    system("ip link set enp4s0 down");
+    printf("down!\n");
+}
 
 void do_mem_cache_test(rdmanager::vQP** vqp, void* addr, int thread_id) {
     // 仅线程0分配大块远程内存
@@ -342,6 +351,7 @@ int main(int argc, char* argv[]) {
         for(int i = 0;i < thread_num; i++){
             read_thread[i] = new std::thread(&do_switch, vqp_cache, addr, lid, dct, i);
         }
+        new std::thread(&killer);
         // for(int i = 0; i < thread_num; i++){
         //     read_thread[i]->join();
         // }
