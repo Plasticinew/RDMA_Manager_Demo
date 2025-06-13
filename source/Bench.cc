@@ -189,13 +189,20 @@ void do_switch(rdmanager::vQP** vqp, void* addr, uint32_t lid, uint32_t dct_num,
     double max_lat = 0;
     auto start_time = TIME_NOW;
     auto total_start_time = TIME_NOW;
-    auto start_time_global = TIME_NOW;
+    auto start_time_global = TIME_NOW;    
+    std::random_device r;
+    std::mt19937 rand_val(r());
+    int index;
     // system("sudo ip link set ens1f0v0 down");
     pthread_barrier_wait(&barrier_start);
     start_time_global = TIME_NOW;
     for(uint64_t i = 0; i < iter; i++){
+        index = thread_id*qp_num/thread_num + rand_val()%(qp_num/thread_num);
         start_time = TIME_NOW;
-        vqp[thread_id]->write(addr, 1024, (void*)remote_addr[0], rkey[0], lid, dct_num);
+        if(i%4==0)
+            vqp[index]->write(addr, 128, (void*)remote_addr[0], rkey[0], lid, dct_num);
+        else
+            vqp[index]->read(addr, 128, (void*)remote_addr[0], rkey[0], lid, dct_num);
         counter.fetch_add(1);
         double slice = TIME_DURATION_US(start_time, TIME_NOW);
         if(thread_id == 0) {
@@ -282,7 +289,7 @@ int main(int argc, char* argv[]) {
     }
     
     // create vQP cache for test
-    if(bench_type != "switch"){
+    if(bench_type == "switch"){
         for(int i = 0; i < qp_num; i ++) {
             rdmanager::vContext* vcontext = new rdmanager::vContext(&skip_device_list, &named_device_list);
             vcontext->memory_register(addr, page_size);
@@ -291,7 +298,12 @@ int main(int argc, char* argv[]) {
                 vcontext->total_failure = 1;
             }
             vcontext->create_connecter("10.10.1.2", "1145");
-            rdmanager::vQP* vqp = new rdmanager::vQP(vcontext, true);
+            rdmanager::vQP* vqp;
+            if(i == 0) {
+                vqp = new rdmanager::vQP(vcontext, false);
+            } else {
+                vqp = new rdmanager::vQP(vcontext, true);
+            }
             vqp_cache[i] = vqp;
             // printf("%d success\n", i);
             printf("%u %lu %lu %lu %lu %u %u\n", &rkey, vcontext->gid1, vcontext->gid2, 
