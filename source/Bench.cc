@@ -289,7 +289,7 @@ int main(int argc, char* argv[]) {
         vcontext->create_connecter("10.10.1.2", "1145");
         rdmanager::vQP* vqp;
         if(i == 0){
-            vcontext->total_failure = 1;
+            // vcontext->total_failure = 1;
             vqp = new rdmanager::vQP(vcontext, &enode);
         } else {
             vqp = new rdmanager::vQP(vcontext, &enode);
