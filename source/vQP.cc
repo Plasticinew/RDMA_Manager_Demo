@@ -5,6 +5,8 @@ namespace rdmanager {
 
 auto last_time = TIME_NOW;
 
+int error_node = -1;
+
 void vQP::recovery(void* local_addr, uint64_t length, uint32_t lid, uint32_t dct_num){
     ErrorType err;
     int start_ = work_queue_start_;
@@ -78,6 +80,9 @@ ErrorType vQP::read(void* local_addr, uint64_t length, void* remote_addr, uint32
 
 ErrorType vQP::write(void* local_addr, uint64_t length, void* remote_addr, uint32_t rkey, uint32_t lid, uint32_t dct_num) {
     // while(!context_->connected());
+    if(error_node == context_->primary_index_){
+        switch_card();
+    }
     if(context_->connected()){
         ErrorType err = write_main(local_addr, length, remote_addr, rkey);
         if(err == SEND_ERROR){
@@ -85,6 +90,7 @@ ErrorType vQP::write(void* local_addr, uint64_t length, void* remote_addr, uint3
             printf("change nic\n");
             return NO_ERROR;
         } else if(err == RECIEVE_ERROR){
+            error_node = context_->primary_index_;
             switch_card();
             // context_->switch_pigeon();
             // context_->new_connect();

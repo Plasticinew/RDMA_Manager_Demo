@@ -209,7 +209,7 @@ void do_switch(rdmanager::vQP** vqp, void* addr, uint32_t lid, uint32_t dct_num,
         index = thread_id*qp_num/thread_num + rand_val()%(qp_num/thread_num);
         start_time = TIME_NOW;
         // if(rand_val()%4==0)
-            vqp[index]->write(addr, 1024, (void*)remote_addr[0], rkey[0], lid, dct_num);
+        vqp[index]->write(addr, 1024, (void*)remote_addr[0], rkey[0], lid, dct_num);
         // else
             // vqp[index]->read(addr, 128, (void*)remote_addr[0], rkey[0], lid, dct_num);
         counter.fetch_add(1);
