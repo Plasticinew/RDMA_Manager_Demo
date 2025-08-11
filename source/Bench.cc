@@ -8,6 +8,11 @@
 
 // 用于测试片上竞争的bench client
 
+using std::vector;
+using rdmanager::PigeonDevice;
+using rdmanager::vContext;
+using rdmanager::vQP;
+
 const uint64_t page_size = 1024*4;
 
 const int qp_num = 128;

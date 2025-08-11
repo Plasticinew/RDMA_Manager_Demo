@@ -1,6 +1,11 @@
 
 #include "vQP.h"
 
+using std::vector;
+using rdmanager::PigeonDevice;
+using rdmanager::vContext;
+using rdmanager::vQP;
+
 const uint64_t size = (uint64_t)2*1024*1024*1024;
 const uint64_t addr = 0x1000000;
 

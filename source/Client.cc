@@ -4,6 +4,11 @@
 #include <unistd.h>
 #include <random>
 
+using std::vector;
+using rdmanager::PigeonDevice;
+using rdmanager::vContext;
+using rdmanager::vQP;
+
 const uint64_t page_size = 1024*4;
 
 const uint64_t iter = 1000000;

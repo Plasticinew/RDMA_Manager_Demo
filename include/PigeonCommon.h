@@ -17,6 +17,8 @@
 #include <sys/mman.h>
 #include "Msg.h"
 
+namespace rdmanager {
+
 #define TIME_NOW (std::chrono::high_resolution_clock::now())
 #define TIME_DURATION_US(start, end) (std::chrono::duration_cast<std::chrono::microseconds>((end) - (start)).count())
 
@@ -45,3 +47,5 @@ inline void pigeon_debug(const char* format, ...) {
 }
 
 inline void pigeon_swap(int& a, int& b) { int temp = a; a = b; b = temp; }
+
+}
